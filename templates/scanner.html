@@ -12,11 +12,14 @@
   .card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
   .label{font-size:12px;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
   .jenis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .jenis button{padding:14px 0;border:0;border-radius:10px;background:#0f172a;color:#94a3b8;font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
-  .jenis button.aktif{color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.15)}
-  .jenis button[data-j="harian"].aktif{background:#2563eb;box-shadow:0 0 0 2px #60a5fa}
-  .jenis button[data-j="solat"].aktif{background:#16a34a;box-shadow:0 0 0 2px #4ade80}
-  .jenis button[data-j="perpus"].aktif{background:#d97706;box-shadow:0 0 0 2px #fbbf24}
+  .jenis button{padding:14px 0;border:0;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s;color:#fff;opacity:.55}
+  .jenis button[data-j="harian"]{background:#2563eb}
+  .jenis button[data-j="solat"]{background:#16a34a}
+  .jenis button[data-j="perpus"]{background:#d97706}
+  .jenis button.aktif{opacity:1;box-shadow:0 0 0 3px rgba(255,255,255,.9)}
+  .jenis button[data-j="harian"].aktif{box-shadow:0 0 0 3px #93c5fd}
+  .jenis button[data-j="solat"].aktif{box-shadow:0 0 0 3px #86efac}
+  .jenis button[data-j="perpus"].aktif{box-shadow:0 0 0 3px #fcd34d}
   .ctrls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
   select,input[type=text]{flex:1;min-width:120px;padding:12px;border-radius:10px;border:0;background:#0f172a;color:#e2e8f0;font-size:15px}
   button.act{padding:12px 14px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
