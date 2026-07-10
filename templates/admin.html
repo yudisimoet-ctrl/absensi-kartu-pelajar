@@ -10,7 +10,7 @@
   body{font-family:system-ui,-apple-system,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:16px;max-width:720px;margin:0 auto}
   h2{margin:6px 0 14px;font-size:20px}
   .card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
-  .card h3{margin:0 0 10px;font-size:15px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
+  .card h3{margin:0 0 10px;font-size:14px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
   input,button,select{padding:10px;border-radius:8px;border:0;font-size:14px}
   input,select{background:#0f172a;color:#fff;flex:1;min-width:110px}
   button{background:#2563eb;color:#fff;cursor:pointer;font-weight:600}
@@ -18,6 +18,7 @@
   button.danger{background:#dc2626}
   .form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
   .msg{font-size:13px;margin-top:8px;color:#4ade80;min-height:16px}
+  .msg.err{color:#f87171}
   .tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
   .tabs button{background:#1e293b}
   .tabs button.aktif{background:#2563eb;font-weight:700}
@@ -70,9 +71,7 @@
     <button onclick="saveProfil()">Simpan</button>
   </div>
   <div id="m2" class="msg"></div>
-  <div class="form" style="margin-top:10px">
-    <button class="danger" onclick="resetProfil()">Hapus Profil Sekolah</button>
-  </div>
+</div>
 
 <div class="card">
   <h3>4 · Daftar Siswa</h3>
@@ -105,46 +104,45 @@
 
 <script>
 let jenisLog='all';
+function setMsg(id,txt,err){const e=document.getElementById(id);e.textContent=txt;e.className='msg'+(err?' err':'');}
 async function loadProfil(){
-  const p=await(await fetch('/api/profil')).json();
-  p_nama.value=p.nama_sekolah||'';p_alamat.value=p.alamat||'';p_kepsek.value=p.kepala_sekolah||'';
-  p_masuk.value=p.jam_masuk||'';p_pulang.value=p.jam_pulang||'';
+  try{
+    const p=await(await fetch('/api/profil')).json();
+    p_nama.value=p.nama_sekolah||'';p_alamat.value=p.alamat||'';p_kepsek.value=p.kepala_sekolah||'';
+    p_masuk.value=p.jam_masuk||'';p_pulang.value=p.jam_pulang||'';
+  }catch(e){}
 }
 async function saveProfil(){
   const d={nama_sekolah:p_nama.value,alamat:p_alamat.value,kepala_sekolah:p_kepsek.value,jam_masuk:p_masuk.value,jam_pulang:p_pulang.value};
   const r=await fetch('/api/profil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
-  m2.textContent=(await r.json()).ok?'Tersimpan':'Gagal';
-}
-async function resetProfil(){
-  if(!confirm('Hapus profil sekolah? (nama/alamat/kepala dikosongkan)'))return;
-  const r=await fetch('/api/profil',{method:'DELETE'});
-  m2.textContent=(await r.json()).ok?'Profil dihapus':'Gagal';
-  loadProfil();
+  setMsg('m2',(await r.json()).ok?'Tersimpan':'Gagal',false);
 }
 async function tampil(){
-  const s=await(await fetch('/api/siswa')).json();
-  document.querySelector('#tbl tbody').innerHTML=s.map(x=>
-    `<tr>
-      <td>${x.foto?`<img class="foto" src="${x.foto}">`:'👤'}</td>
-      <td>${x.id}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.kode}</td>
-      <td>
-        <a class="link" href="/kartu/${x.id}" target="_blank">kartu</a> ·
-        <label class="up">foto<input type="file" accept="image/*" style="display:none" onchange="upFoto(${x.id},this)"></label> ·
-        <a class="link" style="color:#f87171;cursor:pointer" onclick="hapus(${x.id},'${x.nama}')">hapus</a>
-      </td>
-    </tr>`).join('');
-  const url='/api/logs'+(jenisLog!=='all'?('?jenis='+jenisLog):'');
-  const l=await(await fetch(url)).json();
-  document.querySelector('#logtbl tbody').innerHTML=l.map(x=>
-    `<tr><td>${x.waktu}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.jenis}</td><td>${x.keterangan||''}</td></tr>`).join('');
+  try{
+    const s=await(await fetch('/api/siswa')).json();
+    document.querySelector('#tbl tbody').innerHTML=s.map(x=>
+      `<tr>
+        <td>${x.foto?`<img class="foto" src="${x.foto}">`:'👤'}</td>
+        <td>${x.id}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.kode}</td>
+        <td>
+          <a class="link" href="/kartu/${x.id}" target="_blank">kartu</a> ·
+          <label class="up">foto<input type="file" accept="image/*" style="display:none" onchange="upFoto(${x.id},this)"></label> ·
+          <a class="link" style="color:#f87171;cursor:pointer" onclick="hapus(${x.id},'${x.nama.replace(/'/g,"")}')">hapus</a>
+        </td>
+      </tr>`).join('');
+    const url='/api/logs'+(jenisLog!=='all'?('?jenis='+jenisLog):'');
+    const l=await(await fetch(url)).json();
+    document.querySelector('#logtbl tbody').innerHTML=l.map(x=>
+      `<tr><td>${x.waktu}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.jenis}</td><td>${x.keterangan||''}</td></tr>`).join('');
+  }catch(e){}
 }
 async function tambah(){
   const d={nis:nis.value.trim(),nisn:nisn.value.trim(),nama:nama.value.trim(),kelas:kelas.value.trim(),no_wa:nowa.value.trim()};
-  if(!d.nisn||!d.nama){m1.textContent='⚠ NISN & Nama wajib diisi';return;}
+  if(!d.nisn||!d.nama){setMsg('m3','⚠ NISN & Nama wajib diisi',true);return;}
   const r=await fetch('/api/siswa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
   const j=await r.json();
-  if(j.ok){nis.value=nisn.value=nama.value=kelas.value=nowa.value='';m3.textContent='✔ Ditambah: '+j.kode;tampil();}
-  else m3.textContent='⚠ '+j.msg;
+  if(j.ok){nis.value=nisn.value=nama.value=kelas.value=nowa.value='';setMsg('m3','✔ Ditambah: '+j.kode,false);tampil();}
+  else setMsg('m3','⚠ '+j.msg,true);
 }
 async function upFoto(id,input){
   const f=input.files[0]; if(!f)return;
@@ -157,7 +155,7 @@ async function hapus(id,nama){
   if(!confirm('Hapus siswa "'+nama+'"? Data absensinya ikut terhapus.'))return;
   const r=await fetch('/api/siswa/'+id,{method:'DELETE'});
   const j=await r.json();
-  m1.textContent=j.ok?('Dihapus: '+nama):(j.msg||'Gagal');
+  setMsg('m1',j.ok?('Dihapus: '+nama):(j.msg||'Gagal'),!j.ok);
   tampil();
 }
 async function uploadCsv(){
@@ -165,14 +163,14 @@ async function uploadCsv(){
   const fd=new FormData();fd.append('file',f);
   const r=await fetch('/api/siswa/bulk',{method:'POST',body:fd});
   const j=await r.json();
-  m1.textContent=`Import: ${j.added} ditambah, ${j.skipped} dilewati`;
+  setMsg('m1',`Import: ${j.added} ditambah, ${j.skipped} dilewati`,false);
   tampil();
 }
 async function migrate(){
-  if(!confirm('Migrasi siswa + profil dari db-absensi-qr-v5-39-ok.sql? (data lama digabung)'))return;
-  const r=await fetch('/api/migrate',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}');
+  if(!confirm('Migrasi siswa + profil dari db-absensi-qr-v5-39-ok.sql?'))return;
+  const r=await fetch('/api/migrate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
   const j=await r.json();
-  m1.textContent=`Migrasi: ${j.siswa} siswa, profil=${j.profil}`;
+  setMsg('m1',`Migrasi: ${j.siswa} siswa, profil=${j.profil}`,false);
   loadProfil();tampil();
 }
 function setJenis(j,el){jenisLog=j;document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('aktif'));el.classList.add('aktif');tampil();}

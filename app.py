@@ -124,15 +124,6 @@ def profil():
     return jsonify(dict(row) if row else {})
 
 
-@app.route("/api/profil", methods=["DELETE"])
-def reset_profil():
-    db = get_db()
-    db.execute("UPDATE profil_sekolah SET nama_sekolah=NULL, alamat=NULL, "
-               "kepala_sekolah=NULL, jam_masuk=NULL, jam_pulang=NULL, logo=NULL WHERE id=1")
-    db.commit()
-    return jsonify({"ok": True, "msg": "profil direset"})
-
-
 # ---------- Siswa ----------
 @app.route("/api/siswa", methods=["POST"])
 def add_siswa():
