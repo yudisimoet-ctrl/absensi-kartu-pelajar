@@ -45,6 +45,7 @@
     <input id="nowa" placeholder="No WA">
     <button onclick="tambah()">+ Tambah</button>
   </div>
+  <div id="m3" class="msg"></div>
 </div>
 
 <div class="card">
@@ -69,7 +70,9 @@
     <button onclick="saveProfil()">Simpan</button>
   </div>
   <div id="m2" class="msg"></div>
-</div>
+  <div class="form" style="margin-top:10px">
+    <button class="danger" onclick="resetProfil()">Hapus Profil Sekolah</button>
+  </div>
 
 <div class="card">
   <h3>4 · Daftar Siswa</h3>
@@ -112,6 +115,12 @@ async function saveProfil(){
   const r=await fetch('/api/profil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
   m2.textContent=(await r.json()).ok?'Tersimpan':'Gagal';
 }
+async function resetProfil(){
+  if(!confirm('Hapus profil sekolah? (nama/alamat/kepala dikosongkan)'))return;
+  const r=await fetch('/api/profil',{method:'DELETE'});
+  m2.textContent=(await r.json()).ok?'Profil dihapus':'Gagal';
+  loadProfil();
+}
 async function tampil(){
   const s=await(await fetch('/api/siswa')).json();
   document.querySelector('#tbl tbody').innerHTML=s.map(x=>
@@ -131,11 +140,11 @@ async function tampil(){
 }
 async function tambah(){
   const d={nis:nis.value.trim(),nisn:nisn.value.trim(),nama:nama.value.trim(),kelas:kelas.value.trim(),no_wa:nowa.value.trim()};
-  if(!d.nisn||!d.nama){alert('NISN & Nama wajib');return;}
+  if(!d.nisn||!d.nama){m1.textContent='⚠ NISN & Nama wajib diisi';return;}
   const r=await fetch('/api/siswa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
   const j=await r.json();
-  if(j.ok){nis.value=nisn.value=nama.value=kelas.value=nowa.value='';tampil();}
-  else alert(j.msg);
+  if(j.ok){nis.value=nisn.value=nama.value=kelas.value=nowa.value='';m3.textContent='✔ Ditambah: '+j.kode;tampil();}
+  else m3.textContent='⚠ '+j.msg;
 }
 async function upFoto(id,input){
   const f=input.files[0]; if(!f)return;
