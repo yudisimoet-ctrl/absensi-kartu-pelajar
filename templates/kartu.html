@@ -23,7 +23,8 @@
   .qrbox img.qr{width:210px;height:210px}
   .qrbox .cap{font-size:12px;color:#64748b;margin-top:10px}
   .btns{margin-top:16px}
-  .btns button{width:100%;padding:12px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+  .btns button{width:100%;padding:12px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px}
+  .btns button#dlbtn{background:#16a34a}
   .footer{text-align:center;font-size:10px;color:#94a3b8;padding:10px}
   @media print{.btns{display:none}}
 </style>
@@ -48,12 +49,34 @@
       <div class="cap">Arahkan kamera ke QR ini untuk absen</div>
     </div>
 
-    <div class="btns"><button onclick="window.print()">🖨 Cetak Kartu</button></div>
+    <div class="btns">
+      <button onclick="window.print()">🖨 Cetak</button>
+      <button type="button" id="dlbtn" onclick="downloadKartu()">⬇ Download Kartu</button>
+    </div>
   </div>
   <div class="footer">Sistem Absensi Digital · {{p.nama_sekolah or ''}}</div>
 </div>
+<script src="/static/html2canvas.min.js"></script>
 <script>
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
+async function downloadKartu(){
+  const card=document.querySelector('.card');
+  const btn=document.getElementById('dlbtn');
+  btn.disabled=true; btn.textContent='Membuat gambar…';
+  try{
+    const canvas=await html2canvas(card,{scale:3,backgroundColor:'#ffffff',useCORS:true});
+    const a=document.createElement('a');
+    const nm=(document.querySelector('.sch').textContent||'kartu').replace(/\s+/g,'_');
+    a.download=nm+'.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+    btn.textContent='⬇ Download Kartu';
+  }catch(e){
+    btn.textContent='⬇ Download Kartu';
+    alert('Gagal download: '+e);
+  }
+  btn.disabled=false;
+}
 </script>
 </body>
 </html>

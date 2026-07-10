@@ -1,6 +1,6 @@
 // Service Worker — cache kartu & aset supaya bisa buka offline
 const CACHE = 'absensi-v2';
-const ASSETS = ['/', '/scanner', '/admin', '/static/manifest.webmanifest'];
+const ASSETS = ['/', '/scanner', '/admin', '/static/manifest.webmanifest', '/static/html2canvas.min.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
