@@ -86,6 +86,16 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_absensi_waktu ON absensi(waktu);
         """
     )
+    # Migrasi: buang kolom jam_masuk/jam_pulang kalau masih ada (rollback schema lama)
+    cols = [r[1] for r in db.execute("PRAGMA table_info(profil_sekolah)")]
+    if "jam_masuk" in cols or "jam_pulang" in cols:
+        db.execute("""CREATE TABLE profil_sekolah_new (
+            id INTEGER PRIMARY KEY CHECK (id=1),
+            nama_sekolah TEXT, alamat TEXT, kepala_sekolah TEXT, logo TEXT);""")
+        db.execute("""INSERT INTO profil_sekolah_new (id,nama_sekolah,alamat,kepala_sekolah,logo)
+            SELECT id,nama_sekolah,alamat,kepala_sekolah,logo FROM profil_sekolah;""")
+        db.execute("DROP TABLE profil_sekolah")
+        db.execute("ALTER TABLE profil_sekolah_new RENAME TO profil_sekolah")
     db.execute(
         "INSERT OR IGNORE INTO profil_sekolah (id) VALUES (1)"
     )
