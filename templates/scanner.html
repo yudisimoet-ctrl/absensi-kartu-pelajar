@@ -2,86 +2,99 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Scanner Absensi</title>
 <script src="/static/html5-qrcode.min.js"></script>
 <style>
-  body{font-family:system-ui,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:16px}
-  h2{margin:8px 0}
-  #reader{width:100%;max-width:420px;border-radius:12px;overflow:hidden;min-height:60px}
-  .jenis{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
-  .jenis button{padding:12px 16px;border:0;border-radius:10px;background:#1e293b;color:#e2e8f0;font-size:15px;flex:1}
-  .jenis button.aktif{background:#2563eb;color:#fff;font-weight:bold}
-  #hasil{margin-top:14px;padding:14px;border-radius:10px;background:#1e293b;min-height:20px;font-size:16px}
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:16px;max-width:480px;margin:0 auto}
+  h2{margin:4px 0 14px;font-size:20px;font-weight:700}
+  .card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+  .label{font-size:12px;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+  .jenis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .jenis button{padding:14px 0;border:0;border-radius:10px;background:#0f172a;color:#94a3b8;font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
+  .jenis button.aktif{background:#2563eb;color:#fff;box-shadow:0 0 0 2px #3b82f6}
+  .ctrls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  select,input[type=text]{flex:1;min-width:120px;padding:12px;border-radius:10px;border:0;background:#0f172a;color:#e2e8f0;font-size:15px}
+  button.act{padding:12px 14px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+  button.act.alt{background:#0f172a;color:#94a3b8}
+  button.act.green{background:#16a34a}
+  #reader{width:100%;border-radius:12px;overflow:hidden;min-height:50px;background:#0f172a}
+  #reader video{width:100%!important;border-radius:12px}
+  #hasil{font-size:18px;font-weight:600;text-align:center;padding:18px 10px;border-radius:12px;background:#0f172a;min-height:24px;line-height:1.4}
   .ok{color:#4ade80}.err{color:#f87171}.warn{color:#fbbf24}
-  .ctrls{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;align-items:center}
-  select,button.act{padding:10px;border-radius:8px;border:0;font-size:14px;background:#1e293b;color:#fff}
-  button.act{background:#2563eb;cursor:pointer}
-  .nav{margin-top:18px;font-size:13px}.nav a{color:#60a5fa}
+  .hint{font-size:13px;color:#94a3b8;line-height:1.5}
+  .divider{height:1px;background:#0f172a;margin:14px 0}
+  .nav{display:flex;justify-content:center;gap:18px;margin-top:18px;font-size:14px}
+  .nav a{color:#60a5fa;text-decoration:none}
+  input[type=file]{font-size:13px;color:#94a3b8;width:100%}
 </style>
 </head>
 <body>
-<h2>Scanner Absensi</h2>
-<div class="jenis">
-  <button data-j="harian" class="aktif">Harian</button>
-  <button data-j="solat">Solat</button>
-  <button data-j="perpus">Perpus</button>
+<h2>📷 Scanner Absensi</h2>
+
+<div class="card">
+  <div class="label">1 · Pilih Jenis Absen</div>
+  <div class="jenis">
+    <button data-j="harian" class="aktif">Harian</button>
+    <button data-j="solat">Solat</button>
+    <button data-j="perpus">Perpus</button>
+  </div>
 </div>
 
-<div id="warn" class="warn" style="display:none"></div>
-
-<div class="ctrls">
-  <select id="cam"><option value="">— pilih kamera —</option></select>
-  <button class="act" onclick="mintaIzin()">Izin Kamera</button>
-  <button class="act" onclick="startCam()">Mulai Kamera</button>
-  <button class="act" onclick="stopCam()">Stop</button>
+<div class="card">
+  <div class="label">2 · Nyalakan Kamera</div>
+  <div class="ctrls">
+    <button class="act green" onclick="mintaIzin()">Izin Kamera</button>
+    <select id="cam"><option value="">— pilih kamera —</option></select>
+  </div>
+  <div class="ctrls">
+    <button class="act" onclick="startCam()">▶ Mulai</button>
+    <button class="act alt" onclick="stopCam()">■ Stop</button>
+  </div>
+  <div id="reader"></div>
 </div>
 
-<div id="reader"></div>
+<div class="card">
+  <div id="hasil">Pilih jenis, lalu tap <b>Izin Kamera</b> → <b>Mulai</b>.</div>
+</div>
 
-<div class="ctrls">
-  <label class="warn">Atau upload foto kartu (kalau kamera blokir):</label>
+<div class="card">
+  <div class="label">Alternatif (kamera mati)</div>
+  <div class="hint" style="margin-bottom:8px">• Upload foto kartu:</div>
   <input type="file" id="upfile" accept="image/*" onchange="scanFile()">
+  <div class="divider"></div>
+  <div class="hint" style="margin-bottom:8px">• Atau ketik NISN / kode kartu:</div>
+  <div class="ctrls">
+    <input id="manual" type="text" placeholder="misal 9876543210" inputmode="numeric">
+    <button class="act" onclick="submitManual()">Catat</button>
+  </div>
 </div>
 
-<div class="ctrls" style="border-top:1px solid #1e293b;padding-top:10px">
-  <label class="warn">Kamera mati? Input manual (ketik NISN / kode kartu):</label>
-  <input id="manual" placeholder="misal 9876543210 atau ABS-9876543210" style="flex:2">
-  <button class="act" onclick="submitManual()">Catat</button>
-</div>
+<div class="nav"><a href="/admin">Admin</a><a href="/">Home</a></div>
 
-<div id="hasil">Pilih jenis, lalu Mulai Kamera / arahkan ke barcode-QR siswa.</div>
-<div class="nav"><a href="/admin">Admin</a> · <a href="/">Home</a></div>
 <script>
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
 </script>
-
 <script>
-// Cek library & secure context dulu — kalau gagal, kasih pesan jelas
 const out=document.getElementById('hasil');
 const warn=document.getElementById('warn');
-const libOk = (typeof Html5Qrcode !== 'undefined');
-if(!libOk){
-  document.getElementById('hasil').innerHTML='<span class="err">Library scanner gagal load. Refresh halaman.</span>';
-}
-const secure = (location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1');
-if(!secure){
-  document.getElementById('warn').style.display='block';
-  document.getElementById('warn').innerHTML='⚠ Buka lewat https supaya kamera aktif.';
-}
-// Tombol minta izin kamera eksplisit (biar prompt pasti muncul)
+const libOk=(typeof Html5Qrcode!=='undefined');
+if(!libOk){ out.innerHTML='<span class="err">Library scanner gagal load. Refresh halaman.</span>'; }
+const secure=(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1');
+if(!secure){ out.innerHTML='<span class="warn">⚠ Buka lewat https supaya kamera aktif.</span>'; }
+
 async function mintaIzin(){
   try{
     const s=await navigator.mediaDevices.getUserMedia({video:true});
     s.getTracks().forEach(t=>t.stop());
-    out.innerHTML='<span class="ok">Izin kamera OK. Pilih kamera lalu Mulai.</span>';
+    out.innerHTML='<span class="ok">Izin kamera OK ✔ Pilih kamera lalu Mulai.</span>';
     listCams();
   }catch(e){
-    out.innerHTML='<span class="err">Izin kamera ditolak/batal: '+e.name+'. Cek ikon 🔒 di address bar → Kamera = Izinkan, lalu refresh. Atau pakai input manual.</span>';
+    out.innerHTML='<span class="err">Izin ditolak ('+e.name+'). Cek ikon 🔒 di address bar → Kamera=Allow, lalu refresh.</span>';
   }
 }
 </script>
-
 <script>
 let jenis="harian";
 document.querySelectorAll('.jenis button').forEach(b=>{
@@ -90,80 +103,49 @@ document.querySelectorAll('.jenis button').forEach(b=>{
     b.classList.add('aktif'); jenis=b.dataset.j;
   };
 });
-if(!libOk){ /* stop, jangan init scanner */ }
-else { var scanner=new Html5Qrcode("reader"); }
+if(!libOk){ /* stop */ } else { var scanner=new Html5Qrcode("reader"); }
 let running=false;
 
-// Peringatan kalau bukan HTTPS (kamera di HP butuh secure context)
-if(location.protocol!=='https:' && location.hostname!=='localhost' && location.hostname!=='127.0.0.1'){
-  warn.style.display='block';
-  warn.innerHTML='⚠ Buka lewat <b>https</b> (bukan http) supaya kamera di HP aktif. URL sekarang: '+location.href;
-}
-
 async function listCams(){
-  if(!libOk){ return; }
+  if(!libOk) return;
   try{
     const cams=await Html5Qrcode.getCameras();
     const sel=document.getElementById('cam');
     sel.innerHTML='<option value="">— pilih kamera —</option>';
-    if(cams && cams.length){
-      cams.forEach(c=>{
-        const o=document.createElement('option');
-        o.value=c.id; o.textContent=c.label||c.id; sel.appendChild(o);
-      });
-    } else { warn.style.display='block'; warn.innerHTML+='<br>Tidak ada kamera terdeteksi.'; }
-  }catch(e){ warn.style.display='block'; warn.innerHTML='Gagal list kamera: '+e; }
+    if(cams&&cams.length){ cams.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.label||c.id;sel.appendChild(o);}); }
+    else { out.innerHTML='<span class="warn">Tidak ada kamera terdeteksi.</span>'; }
+  }catch(e){ out.innerHTML='<span class="warn">Gagal list kamera: '+e+'</span>'; }
 }
-listCams();
 
 async function startCam(){
-  if(!libOk){ out.innerHTML='<span class="err">Library scanner belum load. Refresh halaman.</span>'; return; }
+  if(!libOk){ out.innerHTML='<span class="err">Library belum load. Refresh.</span>'; return; }
   if(running) await stopCam();
   const camId=document.getElementById('cam').value;
   const config={fps:10,qrbox:260};
-  const devId = camId || {facingMode:"environment"};
+  const devId=camId||{facingMode:"environment"};
   out.innerHTML='<span class="ok">Menyalakan kamera…</span>';
-  try{
-    await scanner.start(devId, config, onScan, ()=>{});
-    running=true;
-  }catch(e){
-    const msg=String(e);
-    if(msg.includes('NotAllowed') || msg.includes('Permission')){
-      out.innerHTML='<span class="err">Izin kamera ditolak. Cara reset di Chrome HP: ketuk ikon 🔒 di address bar → Izin Situs → Kamera → pilih "Izinkan", lalu refresh. Atau pakai input manual di bawah.</span>';
+  try{ await scanner.start(devId,config,onScan,()=>{}); running=true; }
+  catch(e){
+    const m=String(e);
+    if(m.includes('NotAllowed')||m.includes('Permission')){
+      out.innerHTML='<span class="err">Izin kamera ditolak. Ketuk 🔒 di address bar → Kamera=Allow → refresh.</span>';
     } else {
-      try{ await scanner.start({facingMode:"user"}, config, onScan, ()=>{}); running=true; }
+      try{ await scanner.start({facingMode:"user"},config,onScan,()=>{}); running=true; }
       catch(e2){ out.innerHTML='<span class="err">Kamera gagal: '+e2+'</span>'; }
     }
   }
 }
 async function stopCam(){ if(running){ try{await scanner.stop();}catch(e){} running=false; } }
 
-async function submitManual(){
-  const v=document.getElementById('manual').value.trim();
-  if(!v){ alert('ketik NISN atau kode kartu'); return; }
-  // normalisasi: kalau cuma angka, ubah jadi ABS-xxx
-  let kode=v.toUpperCase();
-  if(/^\d+$/.test(v)) kode='ABS-'+v;
-  out.innerHTML='<span class="ok">Memproses…</span>';
-  try{
-    const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({kode,jenis})});
-    const d=await r.json();
-    if(d.ok){out.innerHTML=`<span class="ok">✔ ${d.nama} (${d.kelas||'-'}) · ${d.jenis} · ${d.waktu}</span>`; document.getElementById('manual').value='';}
-    else{out.innerHTML=`<span class="err">✘ ${d.msg}</span>`;}
-  }catch(e){out.innerHTML=`<span class="err">✘ ${e}</span>`;}
-}
-
 async function onScan(decoded){
-  if(running){ await scanner.pause(); }
+  if(running) await scanner.pause();
   out.innerHTML='<span class="ok">Memproses…</span>';
   try{
-    const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({kode:decoded,jenis})});
+    const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kode:decoded,jenis})});
     const d=await r.json();
-    if(d.ok){out.innerHTML=`<span class="ok">✔ ${d.nama} (${d.kelas||'-'}) · ${d.jenis} · ${d.waktu}</span>`;}
-    else{out.innerHTML=`<span class="err">✘ ${d.msg}</span>`;}
-  }catch(e){out.innerHTML=`<span class="err">✘ ${e}</span>`;}
+    if(d.ok){ out.innerHTML=`<span class="ok">✔ ${d.nama}<br>(${d.kelas||'-'}) · ${d.jenis}<br>${d.waktu}</span>`; }
+    else { out.innerHTML=`<span class="err">✘ ${d.msg}</span>`; }
+  }catch(e){ out.innerHTML='<span class="err">✘ '+e+'</span>'; }
   setTimeout(()=>{ if(running) scanner.resume(); },900);
 }
 
@@ -171,10 +153,22 @@ async function scanFile(){
   const f=document.getElementById('upfile').files[0];
   if(!f) return;
   out.innerHTML='<span class="ok">Membaca gambar…</span>';
+  try{ const res=await scanner.scanFile(f,true); await onScan(res); }
+  catch(e){ out.innerHTML='<span class="err">Gagal baca gambar: '+e+'</span>'; }
+}
+
+async function submitManual(){
+  const v=document.getElementById('manual').value.trim();
+  if(!v){ alert('ketik NISN atau kode kartu'); return; }
+  let kode=v.toUpperCase();
+  if(/^\d+$/.test(v)) kode='ABS-'+v;
+  out.innerHTML='<span class="ok">Memproses…</span>';
   try{
-    const res=await scanner.scanFile(f,true);
-    await onScan(res);
-  }catch(e){ out.innerHTML='<span class="err">Gagal baca gambar: '+e+'</span>'; }
+    const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kode,jenis})});
+    const d=await r.json();
+    if(d.ok){ out.innerHTML=`<span class="ok">✔ ${d.nama}<br>(${d.kelas||'-'}) · ${d.jenis}<br>${d.waktu}</span>`; document.getElementById('manual').value=''; }
+    else { out.innerHTML=`<span class="err">✘ ${d.msg}</span>`; }
+  }catch(e){ out.innerHTML='<span class="err">✘ '+e+'</span>'; }
 }
 </script>
 </body>
