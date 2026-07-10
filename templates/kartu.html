@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>Kartu Pelajar</title>
+<style>
+  body{font-family:system-ui,Arial;background:#0f172a;margin:0;display:flex;justify-content:center;padding:24px}
+  .card{background:#fff;border-radius:18px;width:340px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+  .head{background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;padding:18px}
+  .head h2{margin:0;font-size:18px}
+  .head .sch{font-size:13px;font-weight:bold;margin-top:4px}
+  .head .addr{font-size:10px;opacity:.85;margin-top:2px}
+  .body{padding:18px}
+  .row{display:flex;justify-content:space-between;margin:6px 0;font-size:14px;color:#222}
+  .row b{color:#111}
+  .codes{text-align:center;margin-top:14px}
+  .codes img{border:1px solid #eee;border-radius:8px;padding:6px;background:#fff}
+  .label{font-size:11px;color:#666;margin-top:6px;text-transform:uppercase;letter-spacing:1px}
+  .btns{display:flex;gap:8px;margin-top:14px}
+  .btns button{flex:1;padding:10px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-size:13px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head">
+    <h2>KARTU PELAJAR</h2>
+    <div class="sch">{{p.nama_sekolah or 'Nama Sekolah'}}</div>
+    <div class="addr">{{p.alamat or ''}}</div>
+  </div>
+  <div class="body">
+    <div class="row"><span>Nama</span><b>{{s.nama}}</b></div>
+    <div class="row"><span>NISN</span><b>{{s.nisn or s.nis or '-'}}</b></div>
+    <div class="row"><span>Kelas</span><b>{{s.kelas or '-'}}</b></div>
+    <div class="codes">
+      <img src="/api/qr/{{s.id}}" width="150" alt="QR"><div class="label">Scan QR</div>
+      <img src="/api/barcode/{{s.id}}" width="240" alt="Barcode"><div class="label">Barcode ({{s.kode}})</div>
+    </div>
+    <div class="btns">
+      <button onclick="window.print()">Cetak</button>
+    </div>
+  </div>
+</div>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
+</script>
+</body>
+</html>

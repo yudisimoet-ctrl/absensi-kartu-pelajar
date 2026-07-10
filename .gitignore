@@ -1,0 +1,7 @@
+# Ignore
+.venv/
+__pycache__/
+*.pyc
+data/
+drive_import/
+.DS_Store

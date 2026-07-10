@@ -1,0 +1,12 @@
+{
+  "name": "Absensi Digital Kartu Pelajar",
+  "short_name": "Absensi",
+  "description": "Kartu pelajar digital + absensi harian/solat/perpustakaan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {"src": "/api/qr/1", "sizes": "192x192", "type": "image/png", "purpose": "any"}
+  ]
+}

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>Admin Absensi</title>
+<style>
+  body{font-family:system-ui,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:16px}
+  h2{margin:8px 0}
+  input,button,select{padding:10px;border-radius:8px;border:0;font-size:14px}
+  .form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  input{flex:1;min-width:120px;background:#1e293b;color:#fff}
+  button{background:#2563eb;color:#fff;cursor:pointer}
+  .box{background:#1e293b;padding:14px;border-radius:10px;margin:14px 0}
+  .box h3{margin:0 0 10px;font-size:15px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  th,td{padding:8px;border-bottom:1px solid #0f172a;text-align:left}
+  th{color:#94a3b8}
+  .nav a{color:#60a5fa;font-size:13px}
+  .logs{max-height:260px;overflow:auto}
+  .kartu-link{color:#60a5fa;text-decoration:none}
+  .msg{font-size:13px;margin-top:8px;color:#4ade80}
+  .tabs{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .tabs button{background:#1e293b}
+  .tabs button.aktif{background:#2563eb;font-weight:bold}
+</style>
+</head>
+<body>
+<h2>Admin — Data Siswa</h2>
+
+<div class="form">
+  <input id="nis" placeholder="NIS">
+  <input id="nisn" placeholder="NISN">
+  <input id="nama" placeholder="Nama">
+  <input id="kelas" placeholder="Kelas">
+  <input id="nowa" placeholder="No WA">
+  <button onclick="tambah()">+ Tambah</button>
+</div>
+
+<div class="box">
+  <h3>Bulk Import / Migrasi</h3>
+  <input type="file" id="csvfile" accept=".csv"><br><br>
+  <button onclick="uploadCsv()">Upload CSV</button>
+  <button onclick="migrate()">Migrasi dari SQL Drive</button>
+  <a href="/api/template.csv" style="color:#60a5fa">template CSV</a>
+  <div id="m1" class="msg"></div>
+</div>
+
+<div class="box">
+  <h3>Profil Sekolah</h3>
+  <div class="form">
+    <input id="p_nama" placeholder="Nama Sekolah">
+    <input id="p_alamat" placeholder="Alamat">
+    <input id="p_kepsek" placeholder="Kepala Sekolah">
+    <input id="p_masuk" placeholder="Jam Masuk (07:00)">
+    <input id="p_pulang" placeholder="Jam Pulang (13:00)">
+    <button onclick="saveProfil()">Simpan</button>
+  </div>
+  <div id="m2" class="msg"></div>
+</div>
+
+<div class="tabs">
+  <button class="aktif" onclick="setJenis('all',this)">Semua</button>
+  <button onclick="setJenis('harian',this)">Harian</button>
+  <button onclick="setJenis('solat',this)">Solat</button>
+  <button onclick="setJenis('perpus',this)">Perpus</button>
+  <a href="/api/export/csv" style="color:#60a5fa;align-self:center">Export CSV</a>
+</div>
+
+<table id="tbl">
+  <thead><tr><th>ID</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Kode</th><th>Kartu</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<h2 style="margin-top:24px">Log Absensi (terbaru)</h2>
+<div class="logs">
+<table id="logtbl">
+  <thead><tr><th>Waktu</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Jenis</th><th>Ket</th></tr></thead>
+  <tbody></tbody>
+</table>
+</div>
+<div class="nav" style="margin-top:16px"><a href="/">Home</a> · <a href="/scanner">Scanner</a> · <a href="#" onclick="installPWA()">Pasang App</a></div>
+
+<script>
+let jenisLog='all';
+async function loadProfil(){
+  const p=await(await fetch('/api/profil')).json();
+  p_nama.value=p.nama_sekolah||'';p_alamat.value=p.alamat||'';p_kepsek.value=p.kepala_sekolah||'';
+  p_masuk.value=p.jam_masuk||'';p_pulang.value=p.jam_pulang||'';
+}
+async function saveProfil(){
+  const d={nama_sekolah:p_nama.value,nisn:'',alamat:p_alamat.value,kepala_sekolah:p_kepsek.value,jam_masuk:p_masuk.value,jam_pulang:p_pulang.value};
+  const r=await fetch('/api/profil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+  m2.textContent=(await r.json()).ok?'Tersimpan':'Gagal';
+}
+async function tampil(){
+  const s=await(await fetch('/api/siswa')).json();
+  document.querySelector('#tbl tbody').innerHTML=s.map(x=>
+    `<tr><td>${x.id}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.kode}</td><td><a class="kartu-link" href="/kartu/${x.id}" target="_blank">buka</a></td></tr>`).join('');
+  const url='/api/logs'+(jenisLog!=='all'?('?jenis='+jenisLog):'');
+  const l=await(await fetch(url)).json();
+  document.querySelector('#logtbl tbody').innerHTML=l.map(x=>
+    `<tr><td>${x.waktu}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.jenis}</td><td>${x.keterangan||''}</td></tr>`).join('');
+}
+async function tambah(){
+  const d={nis:nis.value.trim(),nisn:nisn.value.trim(),nama:nama.value.trim(),kelas:kelas.value.trim(),no_wa:nowa.value.trim()};
+  if(!d.nisn||!d.nama){alert('NISN & Nama wajib');return;}
+  const r=await fetch('/api/siswa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+  const j=await r.json();
+  if(j.ok){nis.value=nisn.value=nama.value=kelas.value=nowa.value='';tampil();}
+  else alert(j.msg);
+}
+async function uploadCsv(){
+  const f=csvfile.files[0]; if(!f){alert('pilih CSV');return;}
+  const fd=new FormData();fd.append('file',f);
+  const r=await fetch('/api/siswa/bulk',{method:'POST',body:fd});
+  const j=await r.json();
+  m1.textContent=`Import: ${j.added} ditambah, ${j.skipped} dilewati`;
+  tampil();
+}
+async function migrate(){
+  if(!confirm('Migrasi siswa + profil dari db-absensi-qr-v5-39-ok.sql?'))return;
+  const r=await fetch('/api/migrate',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+  const j=await r.json();
+  m1.textContent=`Migrasi: ${j.siswa} siswa, profil=${j.profil}`;
+  loadProfil();tampil();
+}
+function setJenis(j,el){jenisLog=j;document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('aktif'));el.classList.add('aktif');tampil();}
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
+function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>deferredPrompt=null);}}
+loadProfil();tampil();setInterval(tampil,5000);
+</script>
+</body>
+</html>
