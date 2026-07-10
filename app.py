@@ -128,7 +128,10 @@ def profil():
         )
         db.commit()
     row = db.execute("SELECT * FROM profil_sekolah WHERE id=1").fetchone()
-    return jsonify(dict(row) if row else {})
+    res = dict(row) if row else {}
+    if request.method == "POST":
+        res = {"ok": True, **res}
+    return jsonify(res)
 
 
 # ---------- Siswa ----------
