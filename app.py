@@ -59,8 +59,6 @@ def init_db():
             nama_sekolah TEXT,
             alamat TEXT,
             kepala_sekolah TEXT,
-            jam_masuk TEXT,
-            jam_pulang TEXT,
             logo TEXT
         );
         CREATE TABLE IF NOT EXISTS siswa (
@@ -108,15 +106,14 @@ def profil():
     db = get_db()
     if request.method == "POST":
         d = request.get_json(force=True, silent=True) or {}
-        cols = ["nama_sekolah", "alamat", "kepala_sekolah", "jam_masuk", "jam_pulang", "logo"]
+        cols = ["nama_sekolah", "alamat", "kepala_sekolah", "logo"]
         sets = {c: d.get(c) for c in cols}
         db.execute(
-            """INSERT INTO profil_sekolah (id, nama_sekolah, alamat, kepala_sekolah, jam_masuk, jam_pulang, logo)
-               VALUES (1,?,?,?,?,?,?)
+            """INSERT INTO profil_sekolah (id, nama_sekolah, alamat, kepala_sekolah, logo)
+               VALUES (1,?,?,?,?)
                ON CONFLICT(id) DO UPDATE SET
                  nama_sekolah=excluded.nama_sekolah, alamat=excluded.alamat,
-                 kepala_sekolah=excluded.kepala_sekolah, jam_masuk=excluded.jam_masuk,
-                 jam_pulang=excluded.jam_pulang, logo=excluded.logo""",
+                 kepala_sekolah=excluded.kepala_sekolah, logo=excluded.logo""",
             tuple(sets.values()),
         )
         db.commit()
@@ -257,13 +254,12 @@ def migrate():
         vals = ast.literal_eval("(" + m.group(1) + ")")
         # kolom: id,nama_sekolah,alamat,kepala_sekolah,nip_kepala,logo,background,key_wa,jam_masuk,jam_pulang
         db.execute(
-            """INSERT INTO profil_sekolah (id, nama_sekolah, alamat, kepala_sekolah, jam_masuk, jam_pulang, logo)
-               VALUES (1,?,?,?,?,?,?)
+            """INSERT INTO profil_sekolah (id, nama_sekolah, alamat, kepala_sekolah, logo)
+               VALUES (1,?,?,?,?)
                ON CONFLICT(id) DO UPDATE SET
                  nama_sekolah=excluded.nama_sekolah, alamat=excluded.alamat,
-                 kepala_sekolah=excluded.kepala_sekolah, jam_masuk=excluded.jam_masuk,
-                 jam_pulang=excluded.jam_pulang, logo=excluded.logo""",
-            (vals[1], vals[2], vals[3], vals[8], vals[9], vals[5]),
+                 kepala_sekolah=excluded.kepala_sekolah, logo=excluded.logo""",
+            (vals[1], vals[2], vals[3], vals[5]),
         )
         added_profil = True
 

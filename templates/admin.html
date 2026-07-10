@@ -64,10 +64,8 @@
   <h3>3 · Profil Sekolah</h3>
   <div class="form">
     <input id="p_nama" placeholder="Nama Sekolah">
-    <input id="p_alamat" placeholder="Alamat">
+    <input id="p_alamat" placeholder="Alamamat">
     <input id="p_kepsek" placeholder="Kepala Sekolah">
-    <input id="p_masuk" placeholder="Jam Masuk (07:00)">
-    <input id="p_pulang" placeholder="Jam Pulang (13:00)">
     <button onclick="saveProfil()">Simpan</button>
   </div>
   <div id="m2" class="msg"></div>
@@ -109,11 +107,10 @@ async function loadProfil(){
   try{
     const p=await(await fetch('/api/profil')).json();
     p_nama.value=p.nama_sekolah||'';p_alamat.value=p.alamat||'';p_kepsek.value=p.kepala_sekolah||'';
-    p_masuk.value=p.jam_masuk||'';p_pulang.value=p.jam_pulang||'';
   }catch(e){}
 }
 async function saveProfil(){
-  const d={nama_sekolah:p_nama.value,alamat:p_alamat.value,kepala_sekolah:p_kepsek.value,jam_masuk:p_masuk.value,jam_pulang:p_pulang.value};
+  const d={nama_sekolah:p_nama.value,alamat:p_alamat.value,kepala_sekolah:p_kepsek.value};
   const r=await fetch('/api/profil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
   setMsg('m2',(await r.json()).ok?'Tersimpan':'Gagal',false);
 }
