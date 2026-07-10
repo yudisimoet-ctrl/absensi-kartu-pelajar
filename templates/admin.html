@@ -6,49 +6,60 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <title>Admin Absensi</title>
 <style>
-  body{font-family:system-ui,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:16px}
-  h2{margin:8px 0}
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:16px;max-width:720px;margin:0 auto}
+  h2{margin:6px 0 14px;font-size:20px}
+  .card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+  .card h3{margin:0 0 10px;font-size:15px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
   input,button,select{padding:10px;border-radius:8px;border:0;font-size:14px}
-  .form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-  input{flex:1;min-width:120px;background:#1e293b;color:#fff}
-  button{background:#2563eb;color:#fff;cursor:pointer}
-  .box{background:#1e293b;padding:14px;border-radius:10px;margin:14px 0}
-  .box h3{margin:0 0 10px;font-size:15px}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
-  th,td{padding:8px;border-bottom:1px solid #0f172a;text-align:left}
-  th{color:#94a3b8}
-  .nav a{color:#60a5fa;font-size:13px}
-  .logs{max-height:260px;overflow:auto}
-  .kartu-link{color:#60a5fa;text-decoration:none}
-  .msg{font-size:13px;margin-top:8px;color:#4ade80}
-  .tabs{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  input,select{background:#0f172a;color:#fff;flex:1;min-width:110px}
+  button{background:#2563eb;color:#fff;cursor:pointer;font-weight:600}
+  button.alt{background:#0f172a;color:#94a3b8}
+  button.danger{background:#dc2626}
+  .form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .msg{font-size:13px;margin-top:8px;color:#4ade80;min-height:16px}
+  .tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
   .tabs button{background:#1e293b}
-  .tabs button.aktif{background:#2563eb;font-weight:bold}
+  .tabs button.aktif{background:#2563eb;font-weight:700}
+  .tbl-wrap{max-height:300px;overflow:auto;border-radius:10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px;border-bottom:1px solid #0f172a;text-align:left;vertical-align:middle}
+  th{color:#94a3b8;position:sticky;top:0;background:#1e293b}
+  .foto{width:34px;height:34px;border-radius:8px;object-fit:cover;vertical-align:middle}
+  a.link{color:#60a5fa;text-decoration:none}
+  .nav{display:flex;justify-content:center;gap:18px;margin-top:18px;font-size:14px}
+  .nav a{color:#60a5fa;text-decoration:none}
+  label.up{color:#60a5fa;cursor:pointer}
 </style>
 </head>
 <body>
-<h2>Admin — Data Siswa</h2>
+<h2>⚙ Admin — Data Siswa</h2>
 
-<div class="form">
-  <input id="nis" placeholder="NIS">
-  <input id="nisn" placeholder="NISN">
-  <input id="nama" placeholder="Nama">
-  <input id="kelas" placeholder="Kelas">
-  <input id="nowa" placeholder="No WA">
-  <button onclick="tambah()">+ Tambah</button>
+<div class="card">
+  <h3>1 · Tambah Siswa</h3>
+  <div class="form">
+    <input id="nis" placeholder="NIS">
+    <input id="nisn" placeholder="NISN">
+    <input id="nama" placeholder="Nama">
+    <input id="kelas" placeholder="Kelas">
+    <input id="nowa" placeholder="No WA">
+    <button onclick="tambah()">+ Tambah</button>
+  </div>
 </div>
 
-<div class="box">
-  <h3>Bulk Import / Migrasi</h3>
-  <input type="file" id="csvfile" accept=".csv"><br><br>
-  <button onclick="uploadCsv()">Upload CSV</button>
-  <button onclick="migrate()">Migrasi dari SQL Drive</button>
-  <a href="/api/template.csv" style="color:#60a5fa">template CSV</a>
+<div class="card">
+  <h3>2 · Import / Migrasi</h3>
+  <div class="form">
+    <input type="file" id="csvfile" accept=".csv">
+    <button onclick="uploadCsv()">Upload CSV</button>
+    <button class="alt" onclick="migrate()">Migrasi SQL Drive</button>
+    <a class="link" href="/api/template.csv" style="align-self:center">template</a>
+  </div>
   <div id="m1" class="msg"></div>
 </div>
 
-<div class="box">
-  <h3>Profil Sekolah</h3>
+<div class="card">
+  <h3>3 · Profil Sekolah</h3>
   <div class="form">
     <input id="p_nama" placeholder="Nama Sekolah">
     <input id="p_alamat" placeholder="Alamat">
@@ -60,27 +71,34 @@
   <div id="m2" class="msg"></div>
 </div>
 
-<div class="tabs">
-  <button class="aktif" onclick="setJenis('all',this)">Semua</button>
-  <button onclick="setJenis('harian',this)">Harian</button>
-  <button onclick="setJenis('solat',this)">Solat</button>
-  <button onclick="setJenis('perpus',this)">Perpus</button>
-  <a href="/api/export/csv" style="color:#60a5fa;align-self:center">Export CSV</a>
+<div class="card">
+  <h3>4 · Daftar Siswa</h3>
+  <div class="tbl-wrap">
+    <table id="tbl">
+      <thead><tr><th>Foto</th><th>ID</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Kode</th><th>Aksi</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
-<table id="tbl">
-  <thead><tr><th>Foto</th><th>ID</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Kode</th><th>Kartu</th></tr></thead>
-  <tbody></tbody>
-</table>
-
-<h2 style="margin-top:24px">Log Absensi (terbaru)</h2>
-<div class="logs">
-<table id="logtbl">
-  <thead><tr><th>Waktu</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Jenis</th><th>Ket</th></tr></thead>
-  <tbody></tbody>
-</table>
+<div class="card">
+  <h3>5 · Log Absensi (terbaru)</h3>
+  <div class="tabs">
+    <button class="aktif" onclick="setJenis('all',this)">Semua</button>
+    <button onclick="setJenis('harian',this)">Harian</button>
+    <button onclick="setJenis('solat',this)">Solat</button>
+    <button onclick="setJenis('perpus',this)">Perpus</button>
+    <a class="link" href="/api/export/csv" style="align-self:center">⬇ Export CSV</a>
+  </div>
+  <div class="tbl-wrap">
+    <table id="logtbl">
+      <thead><tr><th>Waktu</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Jenis</th><th>Ket</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
-<div class="nav" style="margin-top:16px"><a href="/">Home</a> · <a href="/scanner">Scanner</a> · <a href="#" onclick="installPWA()">Pasang App</a></div>
+
+<div class="nav"><a href="/">Home</a> · <a href="/scanner">Scanner</a> · <a href="#" onclick="installPWA()">Pasang App</a></div>
 
 <script>
 let jenisLog='all';
@@ -90,25 +108,26 @@ async function loadProfil(){
   p_masuk.value=p.jam_masuk||'';p_pulang.value=p.jam_pulang||'';
 }
 async function saveProfil(){
-  const d={nama_sekolah:p_nama.value,nisn:'',alamat:p_alamat.value,kepala_sekolah:p_kepsek.value,jam_masuk:p_masuk.value,jam_pulang:p_pulang.value};
+  const d={nama_sekolah:p_nama.value,alamat:p_alamat.value,kepala_sekolah:p_kepsek.value,jam_masuk:p_masuk.value,jam_pulang:p_pulang.value};
   const r=await fetch('/api/profil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
   m2.textContent=(await r.json()).ok?'Tersimpan':'Gagal';
 }
 async function tampil(){
   const s=await(await fetch('/api/siswa')).json();
   document.querySelector('#tbl tbody').innerHTML=s.map(x=>
-    `<tr><td>${x.foto?`<img src="${x.foto}" style="width:36px;height:36px;border-radius:8px;object-fit:cover">`:'👤'}</td><td>${x.id}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.kode}</td><td><a class="kartu-link" href="/kartu/${x.id}" target="_blank">buka</a> · <label style="color:#60a5fa;cursor:pointer">foto<input type="file" accept="image/*" style="display:none" onchange="upFoto(${x.id},this)"></label></td></tr>`).join('');
+    `<tr>
+      <td>${x.foto?`<img class="foto" src="${x.foto}">`:'👤'}</td>
+      <td>${x.id}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.kode}</td>
+      <td>
+        <a class="link" href="/kartu/${x.id}" target="_blank">kartu</a> ·
+        <label class="up">foto<input type="file" accept="image/*" style="display:none" onchange="upFoto(${x.id},this)"></label> ·
+        <a class="link" style="color:#f87171;cursor:pointer" onclick="hapus(${x.id},'${x.nama}')">hapus</a>
+      </td>
+    </tr>`).join('');
   const url='/api/logs'+(jenisLog!=='all'?('?jenis='+jenisLog):'');
   const l=await(await fetch(url)).json();
   document.querySelector('#logtbl tbody').innerHTML=l.map(x=>
     `<tr><td>${x.waktu}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.jenis}</td><td>${x.keterangan||''}</td></tr>`).join('');
-}
-async function upFoto(id,input){
-  const f=input.files[0]; if(!f)return;
-  const fd=new FormData(); fd.append('file',f);
-  const r=await fetch('/api/siswa/'+id+'/foto',{method:'POST',body:fd});
-  const j=await r.json();
-  if(j.ok) tampil(); else alert(j.msg);
 }
 async function tambah(){
   const d={nis:nis.value.trim(),nisn:nisn.value.trim(),nama:nama.value.trim(),kelas:kelas.value.trim(),no_wa:nowa.value.trim()};
@@ -117,6 +136,20 @@ async function tambah(){
   const j=await r.json();
   if(j.ok){nis.value=nisn.value=nama.value=kelas.value=nowa.value='';tampil();}
   else alert(j.msg);
+}
+async function upFoto(id,input){
+  const f=input.files[0]; if(!f)return;
+  const fd=new FormData(); fd.append('file',f);
+  const r=await fetch('/api/siswa/'+id+'/foto',{method:'POST',body:fd});
+  const j=await r.json();
+  if(j.ok) tampil(); else alert(j.msg);
+}
+async function hapus(id,nama){
+  if(!confirm('Hapus siswa "'+nama+'"? Data absensinya ikut terhapus.'))return;
+  const r=await fetch('/api/siswa/'+id,{method:'DELETE'});
+  const j=await r.json();
+  m1.textContent=j.ok?('Dihapus: '+nama):(j.msg||'Gagal');
+  tampil();
 }
 async function uploadCsv(){
   const f=csvfile.files[0]; if(!f){alert('pilih CSV');return;}
@@ -127,8 +160,8 @@ async function uploadCsv(){
   tampil();
 }
 async function migrate(){
-  if(!confirm('Migrasi siswa + profil dari db-absensi-qr-v5-39-ok.sql?'))return;
-  const r=await fetch('/api/migrate',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+  if(!confirm('Migrasi siswa + profil dari db-absensi-qr-v5-39-ok.sql? (data lama digabung)'))return;
+  const r=await fetch('/api/migrate',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}');
   const j=await r.json();
   m1.textContent=`Migrasi: ${j.siswa} siswa, profil=${j.profil}`;
   loadProfil();tampil();

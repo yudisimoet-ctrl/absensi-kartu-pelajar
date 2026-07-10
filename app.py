@@ -155,6 +155,26 @@ def list_siswa():
     return jsonify([dict(r) for r in rows])
 
 
+@app.route("/api/siswa/<int:siswa_id>", methods=["DELETE"])
+def del_siswa(siswa_id):
+    db = get_db()
+    s = db.execute("SELECT * FROM siswa WHERE id=?", (siswa_id,)).fetchone()
+    if not s:
+        return jsonify({"ok": False, "msg": "siswa tidak ada"}), 404
+    # hapus foto kalau ada
+    foto = s["foto"] or ""
+    if foto.startswith("/foto/"):
+        try:
+            os.remove(os.path.join(UPLOAD_DIR, os.path.basename(foto)))
+        except OSError:
+            pass
+    db.execute("DELETE FROM absensi WHERE siswa_id=?", (siswa_id,))
+    db.execute("DELETE FROM siswa WHERE id=?", (siswa_id,))
+    db.commit()
+    return jsonify({"ok": True, "msg": f"siswa {siswa_id} dihapus"})
+
+
+
 @app.route("/api/siswa/bulk", methods=["POST"])
 def bulk_siswa():
     """Terima JSON array atau file CSV (multipart, field 'file')."""
