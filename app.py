@@ -401,7 +401,8 @@ def log_absen():
         (s["id"], jenis, now, ket),
     )
     db.commit()
-    return jsonify({"ok": True, "nama": s["nama"], "kelas": s["kelas"],
+    return jsonify({"ok": True, "nama": s["nama"], "kelas": s.get("kelas") or "",
+                    "nisn": s.get("nisn") or "", "kode": s["kode"],
                     "jenis": jenis, "waktu": now})
 
 
@@ -476,6 +477,35 @@ def index():
 @app.route("/admin")
 def admin():
     return render_template("admin.html")
+
+
+# ---------- Foto siswa ----------
+UPLOAD_DIR = os.path.join(BASE, "data", "foto")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+@app.route("/api/siswa/<int:siswa_id>/foto", methods=["POST"])
+def upload_foto(siswa_id):
+    db = get_db()
+    s = db.execute("SELECT id FROM siswa WHERE id=?", (siswa_id,)).fetchone()
+    if not s:
+        return jsonify({"ok": False, "msg": "siswa tidak ada"}), 404
+    f = request.files.get("file")
+    if not f:
+        return jsonify({"ok": False, "msg": "file kosong"}), 400
+    ext = "jpg"
+    fn = f"{siswa_id}.{ext}"
+    path = os.path.join(UPLOAD_DIR, fn)
+    f.save(path)
+    url = f"/foto/{fn}"
+    db.execute("UPDATE siswa SET foto=? WHERE id=?", (url, siswa_id))
+    db.commit()
+    return jsonify({"ok": True, "url": url})
+
+
+@app.route("/foto/<path:fn>")
+def serve_foto(fn):
+    return send_from_directory(UPLOAD_DIR, fn)
 
 
 # ---------- PWA ----------

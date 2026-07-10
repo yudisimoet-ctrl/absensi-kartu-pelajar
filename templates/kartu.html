@@ -14,17 +14,14 @@
   .head .sch{font-size:17px;font-weight:800;margin-top:2px}
   .head .addr{font-size:10px;opacity:.8;margin-top:3px}
   .body{padding:18px}
-  .foto{width:74px;height:74px;border-radius:12px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:30px;color:#94a3b8;float:right;margin-left:12px;overflow:hidden}
+  .foto{width:84px;height:84px;border-radius:12px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:34px;color:#94a3b8;float:right;margin-left:12px;overflow:hidden}
   .foto img{width:100%;height:100%;object-fit:cover}
   .row{display:flex;justify-content:space-between;margin:7px 0;font-size:14px;color:#334155}
   .row b{color:#0f172a}
-  .divider{height:1px;background:#e2e8f0;margin:14px 0}
-  .qrbox{text-align:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:16px}
-  .qrbox img.qr{width:190px;height:190px}
-  .qrbox .cap{font-size:12px;color:#64748b;margin-top:8px}
-  .barcodebox{text-align:center;margin-top:14px}
-  .barcodebox img.bar{width:100%;max-width:260px;border:1px solid #e2e8f0;border-radius:8px;padding:6px;background:#fff}
-  .barcodebox .cap{font-size:11px;color:#94a3b8;margin-top:5px;letter-spacing:.5px}
+  .divider{height:1px;background:#e2e8f0;margin:14px 0;clear:both}
+  .qrbox{text-align:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:18px}
+  .qrbox img.qr{width:210px;height:210px}
+  .qrbox .cap{font-size:12px;color:#64748b;margin-top:10px}
   .btns{margin-top:16px}
   .btns button{width:100%;padding:12px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
   .footer{text-align:center;font-size:10px;color:#94a3b8;padding:10px}
@@ -49,11 +46,6 @@
     <div class="qrbox">
       <img class="qr" src="/api/qr/{{s.id}}" alt="QR Code">
       <div class="cap">Arahkan kamera ke QR ini untuk absen</div>
-    </div>
-
-    <div class="barcodebox">
-      <img class="bar" src="/api/barcode/{{s.id}}" alt="Barcode">
-      <div class="cap">ATAU scan barcode · {{s.kode}}</div>
     </div>
 
     <div class="btns"><button onclick="window.print()">🖨 Cetak Kartu</button></div>

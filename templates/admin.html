@@ -69,7 +69,7 @@
 </div>
 
 <table id="tbl">
-  <thead><tr><th>ID</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Kode</th><th>Kartu</th></tr></thead>
+  <thead><tr><th>Foto</th><th>ID</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Kode</th><th>Kartu</th></tr></thead>
   <tbody></tbody>
 </table>
 
@@ -97,11 +97,18 @@ async function saveProfil(){
 async function tampil(){
   const s=await(await fetch('/api/siswa')).json();
   document.querySelector('#tbl tbody').innerHTML=s.map(x=>
-    `<tr><td>${x.id}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.kode}</td><td><a class="kartu-link" href="/kartu/${x.id}" target="_blank">buka</a></td></tr>`).join('');
+    `<tr><td>${x.foto?`<img src="${x.foto}" style="width:36px;height:36px;border-radius:8px;object-fit:cover">`:'👤'}</td><td>${x.id}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.kode}</td><td><a class="kartu-link" href="/kartu/${x.id}" target="_blank">buka</a> · <label style="color:#60a5fa;cursor:pointer">foto<input type="file" accept="image/*" style="display:none" onchange="upFoto(${x.id},this)"></label></td></tr>`).join('');
   const url='/api/logs'+(jenisLog!=='all'?('?jenis='+jenisLog):'');
   const l=await(await fetch(url)).json();
   document.querySelector('#logtbl tbody').innerHTML=l.map(x=>
     `<tr><td>${x.waktu}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.jenis}</td><td>${x.keterangan||''}</td></tr>`).join('');
+}
+async function upFoto(id,input){
+  const f=input.files[0]; if(!f)return;
+  const fd=new FormData(); fd.append('file',f);
+  const r=await fetch('/api/siswa/'+id+'/foto',{method:'POST',body:fd});
+  const j=await r.json();
+  if(j.ok) tampil(); else alert(j.msg);
 }
 async function tambah(){
   const d={nis:nis.value.trim(),nisn:nisn.value.trim(),nama:nama.value.trim(),kelas:kelas.value.trim(),no_wa:nowa.value.trim()};

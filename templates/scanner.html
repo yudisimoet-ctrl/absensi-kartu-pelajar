@@ -155,7 +155,10 @@ async function onScan(decoded){
   try{
     const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kode:decoded,jenis})});
     const d=await r.json();
-    if(d.ok){ beep(); out.innerHTML=`<span class="ok">✔ ${d.nama}<br>(${d.kelas||'-'}) · ${d.jenis}<br>${d.waktu}<br><span style="font-size:13px;color:#94a3b8">← scan berikutnya</span></span>`; }
+    if(d.ok){ beep();
+      const foto = d.foto ? `<img src="${d.foto}" style="width:54px;height:54px;border-radius:10px;object-fit:cover;vertical-align:middle;margin-right:10px">` : '👤 ';
+      out.innerHTML=`<span class="ok" style="display:flex;align-items:center;justify-content:center">${foto}<span style="text-align:left"><b>${d.nama}</b><br><span style="font-size:13px;font-weight:400">${d.nisn||'-'} · ${d.kelas||'-'}<br>${d.jenis} · ${d.waktu}</span></span></span><br><span style="font-size:13px;color:#94a3b8">← scan berikutnya</span>`;
+    }
     else if(d.sudah){ out.innerHTML=`<span class="warn">↺ ${d.nama} sudah absen ${d.jenis} hari ini</span>`; }
     else { out.innerHTML=`<span class="err">✘ ${d.msg}</span>`; }
   }catch(e){ out.innerHTML='<span class="err">✘ '+e+'</span>'; }
