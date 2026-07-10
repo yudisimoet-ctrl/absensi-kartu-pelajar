@@ -61,9 +61,6 @@
   <div class="label">2 · Kamera</div>
   <div class="ctrls">
     <button class="act green" onclick="mintaIzin()">Izin Kamera</button>
-    <select id="cam"><option value="">— pilih kamera —</option></select>
-  </div>
-  <div class="ctrls">
     <button class="act" onclick="startCam()">▶ Mulai</button>
     <button class="act alt" onclick="stopCam()">■ Stop</button>
   </div>
@@ -126,8 +123,7 @@ async function mintaIzin(){
   try{
     const s=await navigator.mediaDevices.getUserMedia({video:true});
     s.getTracks().forEach(t=>t.stop());
-    statusEl.innerHTML='<span class="ok">Izin kamera OK ✔ Pilih kamera lalu Mulai.</span>';
-    listCams();
+    statusEl.innerHTML='<span class="ok">Izin kamera OK ✔ Tap Mulai.</span>';
   }catch(e){
     statusEl.innerHTML='<span class="err">Izin ditolak ('+e.name+'). Cek ikon 🔒 di address bar → Kamera=Allow, lalu refresh.</span>';
   }
@@ -144,23 +140,11 @@ document.querySelectorAll('.jenis button').forEach(b=>{
 if(!libOk){ /* stop */ } else { var scanner=new Html5Qrcode("reader"); }
 let running=false;
 
-async function listCams(){
-  if(!libOk) return;
-  try{
-    const cams=await Html5Qrcode.getCameras();
-    const sel=document.getElementById('cam');
-    sel.innerHTML='<option value="">— pilih kamera —</option>';
-    if(cams&&cams.length){ cams.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.label||c.id;sel.appendChild(o);}); }
-    else { statusEl.innerHTML='<span class="warn">Tidak ada kamera terdeteksi.</span>'; }
-  }catch(e){ statusEl.innerHTML='<span class="warn">Gagal list kamera: '+e+'</span>'; }
-}
-
 async function startCam(){
   if(!libOk){ statusEl.innerHTML='<span class="err">Library belum load. Refresh.</span>'; return; }
   if(running) await stopCam();
-  const camId=document.getElementById('cam').value;
   const config={fps:10,qrbox:260};
-  const devId=camId||{facingMode:"environment"};
+  const devId={facingMode:"environment"};   // langsung kamera belakang
   statusEl.innerHTML='<span class="ok">Menyalakan kamera…</span>';
   try{ await scanner.start(devId,config,onScan,()=>{}); running=true; }
   catch(e){
