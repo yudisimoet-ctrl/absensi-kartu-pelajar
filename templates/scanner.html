@@ -137,16 +137,28 @@ async function startCam(){
 }
 async function stopCam(){ if(running){ try{await scanner.stop();}catch(e){} running=false; } }
 
+let lastScan=0;
+function beep(){
+  try{
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type='sine'; o.frequency.value=880; g.gain.value=0.1;
+    o.start(); setTimeout(()=>o.stop(),120);
+  }catch(e){}
+}
 async function onScan(decoded){
-  if(running) await scanner.pause();
+  const now=Date.now();
+  if(now-lastScan<1500) return;   // debounce 1.5dtk (anti double)
+  lastScan=now;
   out.innerHTML='<span class="ok">Memproses…</span>';
   try{
     const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kode:decoded,jenis})});
     const d=await r.json();
-    if(d.ok){ out.innerHTML=`<span class="ok">✔ ${d.nama}<br>(${d.kelas||'-'}) · ${d.jenis}<br>${d.waktu}</span>`; }
+    if(d.ok){ beep(); out.innerHTML=`<span class="ok">✔ ${d.nama}<br>(${d.kelas||'-'}) · ${d.jenis}<br>${d.waktu}<br><span style="font-size:13px;color:#94a3b8">← scan berikutnya</span></span>`; }
     else { out.innerHTML=`<span class="err">✘ ${d.msg}</span>`; }
   }catch(e){ out.innerHTML='<span class="err">✘ '+e+'</span>'; }
-  setTimeout(()=>{ if(running) scanner.resume(); },900);
+  // TIDAK pause → kamera tetap jalan, scan terus tanpa putus
 }
 
 async function scanFile(){

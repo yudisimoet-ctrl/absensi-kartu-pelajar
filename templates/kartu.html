@@ -6,41 +6,59 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <title>Kartu Pelajar</title>
 <style>
-  body{font-family:system-ui,Arial;background:#0f172a;margin:0;display:flex;justify-content:center;padding:24px}
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Arial;background:#0f172a;margin:0;display:flex;justify-content:center;padding:20px}
   .card{background:#fff;border-radius:18px;width:340px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.4)}
-  .head{background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;padding:18px}
-  .head h2{margin:0;font-size:18px}
-  .head .sch{font-size:13px;font-weight:bold;margin-top:4px}
-  .head .addr{font-size:10px;opacity:.85;margin-top:2px}
+  .head{background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;padding:18px 18px 14px}
+  .head .judul{font-size:13px;letter-spacing:2px;opacity:.85}
+  .head .sch{font-size:17px;font-weight:800;margin-top:2px}
+  .head .addr{font-size:10px;opacity:.8;margin-top:3px}
   .body{padding:18px}
-  .row{display:flex;justify-content:space-between;margin:6px 0;font-size:14px;color:#222}
-  .row b{color:#111}
-  .codes{text-align:center;margin-top:14px}
-  .codes img{border:1px solid #eee;border-radius:8px;padding:6px;background:#fff}
-  .label{font-size:11px;color:#666;margin-top:6px;text-transform:uppercase;letter-spacing:1px}
-  .btns{display:flex;gap:8px;margin-top:14px}
-  .btns button{flex:1;padding:10px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-size:13px}
+  .foto{width:74px;height:74px;border-radius:12px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:30px;color:#94a3b8;float:right;margin-left:12px;overflow:hidden}
+  .foto img{width:100%;height:100%;object-fit:cover}
+  .row{display:flex;justify-content:space-between;margin:7px 0;font-size:14px;color:#334155}
+  .row b{color:#0f172a}
+  .divider{height:1px;background:#e2e8f0;margin:14px 0}
+  .qrbox{text-align:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:16px}
+  .qrbox img.qr{width:190px;height:190px}
+  .qrbox .cap{font-size:12px;color:#64748b;margin-top:8px}
+  .barcodebox{text-align:center;margin-top:14px}
+  .barcodebox img.bar{width:100%;max-width:260px;border:1px solid #e2e8f0;border-radius:8px;padding:6px;background:#fff}
+  .barcodebox .cap{font-size:11px;color:#94a3b8;margin-top:5px;letter-spacing:.5px}
+  .btns{margin-top:16px}
+  .btns button{width:100%;padding:12px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+  .footer{text-align:center;font-size:10px;color:#94a3b8;padding:10px}
+  @media print{.btns{display:none}}
 </style>
 </head>
 <body>
 <div class="card">
   <div class="head">
-    <h2>KARTU PELAJAR</h2>
+    <div class="judul">KARTU PELAJAR</div>
     <div class="sch">{{p.nama_sekolah or 'Nama Sekolah'}}</div>
     <div class="addr">{{p.alamat or ''}}</div>
   </div>
   <div class="body">
+    <div class="foto">{% if s.foto %}<img src="{{s.foto}}" alt="">{% else %}👤{% endif %}</div>
     <div class="row"><span>Nama</span><b>{{s.nama}}</b></div>
     <div class="row"><span>NISN</span><b>{{s.nisn or s.nis or '-'}}</b></div>
     <div class="row"><span>Kelas</span><b>{{s.kelas or '-'}}</b></div>
-    <div class="codes">
-      <img src="/api/qr/{{s.id}}" width="150" alt="QR"><div class="label">Scan QR</div>
-      <img src="/api/barcode/{{s.id}}" width="240" alt="Barcode"><div class="label">Barcode ({{s.kode}})</div>
+
+    <div class="divider"></div>
+
+    <div class="qrbox">
+      <img class="qr" src="/api/qr/{{s.id}}" alt="QR Code">
+      <div class="cap">Arahkan kamera ke QR ini untuk absen</div>
     </div>
-    <div class="btns">
-      <button onclick="window.print()">Cetak</button>
+
+    <div class="barcodebox">
+      <img class="bar" src="/api/barcode/{{s.id}}" alt="Barcode">
+      <div class="cap">ATAU scan barcode · {{s.kode}}</div>
     </div>
+
+    <div class="btns"><button onclick="window.print()">🖨 Cetak Kartu</button></div>
   </div>
+  <div class="footer">Sistem Absensi Digital · {{p.nama_sekolah or ''}}</div>
 </div>
 <script>
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
