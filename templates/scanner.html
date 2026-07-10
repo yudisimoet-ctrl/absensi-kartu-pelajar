@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Scanner Absensi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Scanner Absensi — Guru</title>
 <script src="/static/html5-qrcode.min.js"></script>
 <style>
   *{box-sizing:border-box}
@@ -19,19 +19,34 @@
   button.act{padding:12px 14px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
   button.act.alt{background:#0f172a;color:#94a3b8}
   button.act.green{background:#16a34a}
-  #reader{width:100%;border-radius:12px;overflow:hidden;min-height:50px;background:#0f172a}
+  input[type=file]{font-size:13px;color:#94a3b8;width:100%}
+
+  /* Kamera + overlay hasil menimpa kamera */
+  .cam-wrap{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:280px}
+  #reader{width:100%}
   #reader video{width:100%!important;border-radius:12px}
-  #hasil{font-size:18px;font-weight:600;text-align:center;padding:18px 10px;border-radius:12px;background:#0f172a;min-height:24px;line-height:1.4}
-  .ok{color:#4ade80}.err{color:#f87171}.warn{color:#fbbf24}
+  #overlay{position:absolute;inset:0;display:none;flex-direction:column;justify-content:flex-end;
+    padding:14px;background:linear-gradient(to top,rgba(15,23,42,.92) 0%,rgba(15,23,42,.55) 45%,rgba(15,23,42,0) 100%)}
+  #overlay .row{display:flex;align-items:center;gap:12px}
+  #overlay .pic{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:0 0 auto;background:#334155}
+  #overlay .nm{font-size:19px;font-weight:700;line-height:1.2}
+  #overlay .sub{font-size:13px;color:#cbd5e1;margin-top:2px}
+  #overlay .tag{display:inline-block;margin-top:8px;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px}
+  #overlay.ok .tag{background:#16a34a;color:#fff}
+  #overlay.warn .tag{background:#d97706;color:#fff}
+  #overlay.err .tag{background:#dc2626;color:#fff}
+  #overlay .next{font-size:12px;color:#94a3b8;margin-top:6px}
+
+  .status{font-size:15px;font-weight:600;padding:14px;border-radius:12px;background:#0f172a;min-height:22px;line-height:1.4;text-align:center}
+  .status.ok{color:#4ade80}.status.err{color:#f87171}.status.warn{color:#fbbf24}
   .hint{font-size:13px;color:#94a3b8;line-height:1.5}
   .divider{height:1px;background:#0f172a;margin:14px 0}
-  .nav{display:flex;justify-content:center;gap:18px;margin-top:18px;font-size:14px}
-  .nav a{color:#60a5fa;text-decoration:none}
-  input[type=file]{font-size:13px;color:#94a3b8;width:100%}
+  .badge{display:inline-block;font-size:12px;color:#94a3b8;background:#0f172a;padding:4px 10px;border-radius:8px}
 </style>
 </head>
 <body>
 <h2>📷 Scanner Absensi</h2>
+<span class="badge">Untuk Guru</span>
 
 <div class="card">
   <div class="label">1 · Pilih Jenis Absen</div>
@@ -43,7 +58,7 @@
 </div>
 
 <div class="card">
-  <div class="label">2 · Nyalakan Kamera</div>
+  <div class="label">2 · Kamera</div>
   <div class="ctrls">
     <button class="act green" onclick="mintaIzin()">Izin Kamera</button>
     <select id="cam"><option value="">— pilih kamera —</option></select>
@@ -52,12 +67,21 @@
     <button class="act" onclick="startCam()">▶ Mulai</button>
     <button class="act alt" onclick="stopCam()">■ Stop</button>
   </div>
-  <div id="reader"></div>
+  <div class="cam-wrap">
+    <div id="reader"></div>
+    <div id="overlay"><div class="row">
+      <img class="pic" id="o-pic" src="" alt="">
+      <div>
+        <div class="nm" id="o-nm">—</div>
+        <div class="sub" id="o-sub"></div>
+        <span class="tag" id="o-tag"></span>
+        <div class="next">← arahkan ke kartu berikutnya</div>
+      </div>
+    </div></div>
+  </div>
 </div>
 
-<div class="card">
-  <div id="hasil">Pilih jenis, lalu tap <b>Izin Kamera</b> → <b>Mulai</b>.</div>
-</div>
+<div id="status" class="status">Pilih jenis, lalu tap <b>Izin Kamera</b> → <b>Mulai</b>.</div>
 
 <div class="card">
   <div class="label">Alternatif (kamera mati)</div>
@@ -71,27 +95,41 @@
   </div>
 </div>
 
-<div class="nav"><a href="/admin">Admin</a><a href="/">Home</a></div>
-
 <script>
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
 </script>
 <script>
-const out=document.getElementById('hasil');
-const warn=document.getElementById('warn');
+const statusEl=document.getElementById('status');
+const ov=document.getElementById('overlay');
 const libOk=(typeof Html5Qrcode!=='undefined');
-if(!libOk){ out.innerHTML='<span class="err">Library scanner gagal load. Refresh halaman.</span>'; }
+if(!libOk){ statusEl.innerHTML='<span class="err">Library scanner gagal load. Refresh halaman.</span>'; }
 const secure=(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1');
-if(!secure){ out.innerHTML='<span class="warn">⚠ Buka lewat https supaya kamera aktif.</span>'; }
+if(!secure){ statusEl.innerHTML='<span class="warn">⚠ Buka lewat https supaya kamera aktif.</span>'; }
+
+function showOverlay(d,kind){
+  ov.className='';
+  ov.classList.add(kind);
+  ov.style.display='flex';
+  const pic=document.getElementById('o-pic');
+  if(d.foto){ pic.src=d.foto; pic.style.display='block'; }
+  else { pic.removeAttribute('src'); pic.style.display='none'; }
+  document.getElementById('o-nm').textContent=d.nama||'—';
+  document.getElementById('o-sub').textContent=
+    [d.nisn||'-', d.kelas||'-', d.jenis?('absen '+d.jenis):''].filter(Boolean).join(' · ');
+  const tag=document.getElementById('o-tag');
+  if(kind==='ok'){ tag.textContent='✔ Tercatat '+(d.waktu||''); }
+  else if(kind==='warn'){ tag.textContent='↺ '+d.msg; }
+  else { tag.textContent='✘ '+d.msg; }
+}
 
 async function mintaIzin(){
   try{
     const s=await navigator.mediaDevices.getUserMedia({video:true});
     s.getTracks().forEach(t=>t.stop());
-    out.innerHTML='<span class="ok">Izin kamera OK ✔ Pilih kamera lalu Mulai.</span>';
+    statusEl.innerHTML='<span class="ok">Izin kamera OK ✔ Pilih kamera lalu Mulai.</span>';
     listCams();
   }catch(e){
-    out.innerHTML='<span class="err">Izin ditolak ('+e.name+'). Cek ikon 🔒 di address bar → Kamera=Allow, lalu refresh.</span>';
+    statusEl.innerHTML='<span class="err">Izin ditolak ('+e.name+'). Cek ikon 🔒 di address bar → Kamera=Allow, lalu refresh.</span>';
   }
 }
 </script>
@@ -113,25 +151,25 @@ async function listCams(){
     const sel=document.getElementById('cam');
     sel.innerHTML='<option value="">— pilih kamera —</option>';
     if(cams&&cams.length){ cams.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.label||c.id;sel.appendChild(o);}); }
-    else { out.innerHTML='<span class="warn">Tidak ada kamera terdeteksi.</span>'; }
-  }catch(e){ out.innerHTML='<span class="warn">Gagal list kamera: '+e+'</span>'; }
+    else { statusEl.innerHTML='<span class="warn">Tidak ada kamera terdeteksi.</span>'; }
+  }catch(e){ statusEl.innerHTML='<span class="warn">Gagal list kamera: '+e+'</span>'; }
 }
 
 async function startCam(){
-  if(!libOk){ out.innerHTML='<span class="err">Library belum load. Refresh.</span>'; return; }
+  if(!libOk){ statusEl.innerHTML='<span class="err">Library belum load. Refresh.</span>'; return; }
   if(running) await stopCam();
   const camId=document.getElementById('cam').value;
   const config={fps:10,qrbox:260};
   const devId=camId||{facingMode:"environment"};
-  out.innerHTML='<span class="ok">Menyalakan kamera…</span>';
+  statusEl.innerHTML='<span class="ok">Menyalakan kamera…</span>';
   try{ await scanner.start(devId,config,onScan,()=>{}); running=true; }
   catch(e){
     const m=String(e);
     if(m.includes('NotAllowed')||m.includes('Permission')){
-      out.innerHTML='<span class="err">Izin kamera ditolak. Ketuk 🔒 di address bar → Kamera=Allow → refresh.</span>';
+      statusEl.innerHTML='<span class="err">Izin kamera ditolak. Ketuk 🔒 di address bar → Kamera=Allow → refresh.</span>';
     } else {
       try{ await scanner.start({facingMode:"user"},config,onScan,()=>{}); running=true; }
-      catch(e2){ out.innerHTML='<span class="err">Kamera gagal: '+e2+'</span>'; }
+      catch(e2){ statusEl.innerHTML='<span class="err">Kamera gagal: '+e2+'</span>'; }
     }
   }
 }
@@ -151,26 +189,23 @@ async function onScan(decoded){
   const now=Date.now();
   if(now-lastScan<1500) return;   // debounce 1.5dtk (anti double)
   lastScan=now;
-  out.innerHTML='<span class="ok">Memproses…</span>';
+  statusEl.innerHTML='<span class="ok">Memproses…</span>';
   try{
     const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kode:decoded,jenis})});
     const d=await r.json();
-    if(d.ok){ beep();
-      const foto = d.foto ? `<img src="${d.foto}" style="width:54px;height:54px;border-radius:10px;object-fit:cover;vertical-align:middle;margin-right:10px">` : '👤 ';
-      out.innerHTML=`<span class="ok" style="display:flex;align-items:center;justify-content:center">${foto}<span style="text-align:left"><b>${d.nama}</b><br><span style="font-size:13px;font-weight:400">${d.nisn||'-'} · ${d.kelas||'-'}<br>${d.jenis} · ${d.waktu}</span></span></span><br><span style="font-size:13px;color:#94a3b8">← scan berikutnya</span>`;
-    }
-    else if(d.sudah){ out.innerHTML=`<span class="warn">↺ ${d.nama} sudah absen ${d.jenis} hari ini</span>`; }
-    else { out.innerHTML=`<span class="err">✘ ${d.msg}</span>`; }
-  }catch(e){ out.innerHTML='<span class="err">✘ '+e+'</span>'; }
+    if(d.ok){ beep(); showOverlay(d,'ok'); statusEl.innerHTML='<span class="ok">✔ Tercatat. Arahkan ke kartu berikutnya.</span>'; }
+    else if(d.sudah){ showOverlay(d,'warn'); statusEl.innerHTML='<span class="warn">↺ Sudah absen.</span>'; }
+    else { showOverlay(d,'err'); statusEl.innerHTML='<span class="err">✘ '+d.msg+'</span>'; }
+  }catch(e){ statusEl.innerHTML='<span class="err">✘ '+e+'</span>'; }
   // TIDAK pause → kamera tetap jalan, scan terus tanpa putus
 }
 
 async function scanFile(){
   const f=document.getElementById('upfile').files[0];
   if(!f) return;
-  out.innerHTML='<span class="ok">Membaca gambar…</span>';
+  statusEl.innerHTML='<span class="ok">Membaca gambar…</span>';
   try{ const res=await scanner.scanFile(f,true); await onScan(res); }
-  catch(e){ out.innerHTML='<span class="err">Gagal baca gambar: '+e+'</span>'; }
+  catch(e){ statusEl.innerHTML='<span class="err">Gagal baca gambar: '+e+'</span>'; }
 }
 
 async function submitManual(){
@@ -178,13 +213,14 @@ async function submitManual(){
   if(!v){ alert('ketik NISN atau kode kartu'); return; }
   let kode=v.toUpperCase();
   if(/^\d+$/.test(v)) kode='ABS-'+v;
-  out.innerHTML='<span class="ok">Memproses…</span>';
+  statusEl.innerHTML='<span class="ok">Memproses…</span>';
   try{
     const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kode,jenis})});
     const d=await r.json();
-    if(d.ok){ out.innerHTML=`<span class="ok">✔ ${d.nama}<br>(${d.kelas||'-'}) · ${d.jenis}<br>${d.waktu}</span>`; document.getElementById('manual').value=''; }
-    else { out.innerHTML=`<span class="err">✘ ${d.msg}</span>`; }
-  }catch(e){ out.innerHTML='<span class="err">✘ '+e+'</span>'; }
+    if(d.ok){ showOverlay(d,'ok'); statusEl.innerHTML='<span class="ok">✔ Tercatat.</span>'; document.getElementById('manual').value=''; }
+    else if(d.sudah){ showOverlay(d,'warn'); statusEl.innerHTML='<span class="warn">↺ Sudah absen.</span>'; }
+    else { showOverlay(d,'err'); statusEl.innerHTML='<span class="err">✘ '+d.msg+'</span>'; }
+  }catch(e){ statusEl.innerHTML='<span class="err">✘ '+e+'</span>'; }
 }
 </script>
 </body>

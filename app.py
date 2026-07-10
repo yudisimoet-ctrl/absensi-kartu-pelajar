@@ -414,7 +414,9 @@ def log_absen():
     if sudah_absen_hari_ini(s["id"], jenis, tanggal):
         return jsonify({"ok": False, "sudah": True,
                         "msg": f"{s['nama']} sudah absen {jenis} hari ini",
-                        "nama": s["nama"], "kelas": s["kelas"], "jenis": jenis})
+                        "nama": s["nama"], "kelas": s.get("kelas") or "",
+                        "nisn": s.get("nisn") or "", "foto": s.get("foto") or "",
+                        "jenis": jenis, "waktu": now})
     db = get_db()
     db.execute(
         "INSERT INTO absensi (siswa_id, jenis, waktu, keterangan) VALUES (?,?,?,?)",
@@ -423,6 +425,7 @@ def log_absen():
     db.commit()
     return jsonify({"ok": True, "nama": s["nama"], "kelas": s.get("kelas") or "",
                     "nisn": s.get("nisn") or "", "kode": s["kode"],
+                    "foto": s.get("foto") or "",
                     "jenis": jenis, "waktu": now})
 
 
