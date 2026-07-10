@@ -43,6 +43,12 @@
   <input type="file" id="upfile" accept="image/*" onchange="scanFile()">
 </div>
 
+<div class="ctrls" style="border-top:1px solid #1e293b;padding-top:10px">
+  <label class="warn">Kamera mati? Input manual (ketik NISN / kode kartu):</label>
+  <input id="manual" placeholder="misal 9876543210 atau ABS-9876543210" style="flex:2">
+  <button class="act" onclick="submitManual()">Catat</button>
+</div>
+
 <div id="hasil">Pilih jenis, lalu Mulai Kamera / arahkan ke barcode-QR siswa.</div>
 <div class="nav"><a href="/admin">Admin</a> · <a href="/">Home</a></div>
 <script>
@@ -93,12 +99,32 @@ async function startCam(){
     await scanner.start(devId, config, onScan, ()=>{});
     running=true;
   }catch(e){
-    // fallback: coba kamera pertama
-    try{ await scanner.start({facingMode:"user"}, config, onScan, ()=>{}); running=true; }
-    catch(e2){ out.innerHTML='<span class="err">Kamera gagal: '+e2+'</span>'; }
+    const msg=String(e);
+    if(msg.includes('NotAllowed') || msg.includes('Permission')){
+      out.innerHTML='<span class="err">Izin kamera ditolak. Cara reset di Chrome HP: ketuk ikon 🔒 di address bar → Izin Situs → Kamera → pilih "Izinkan", lalu refresh. Atau pakai input manual di bawah.</span>';
+    } else {
+      try{ await scanner.start({facingMode:"user"}, config, onScan, ()=>{}); running=true; }
+      catch(e2){ out.innerHTML='<span class="err">Kamera gagal: '+e2+'</span>'; }
+    }
   }
 }
 async function stopCam(){ if(running){ try{await scanner.stop();}catch(e){} running=false; } }
+
+async function submitManual(){
+  const v=document.getElementById('manual').value.trim();
+  if(!v){ alert('ketik NISN atau kode kartu'); return; }
+  // normalisasi: kalau cuma angka, ubah jadi ABS-xxx
+  let kode=v.toUpperCase();
+  if(/^\d+$/.test(v)) kode='ABS-'+v;
+  out.innerHTML='<span class="ok">Memproses…</span>';
+  try{
+    const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kode,jenis})});
+    const d=await r.json();
+    if(d.ok){out.innerHTML=`<span class="ok">✔ ${d.nama} (${d.kelas||'-'}) · ${d.jenis} · ${d.waktu}</span>`; document.getElementById('manual').value='';}
+    else{out.innerHTML=`<span class="err">✘ ${d.msg}</span>`;}
+  }catch(e){out.innerHTML=`<span class="err">✘ ${e}</span>`;}
+}
 
 async function onScan(decoded){
   if(running){ await scanner.pause(); }
