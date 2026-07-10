@@ -221,6 +221,8 @@ def migrate():
     path = request.get_json(force=True, silent=True) or {}
     sql_path = path.get("path") or os.path.join(BASE, "drive_import", "db-absensi-qr-v5-39-ok.sql")
     if not os.path.exists(sql_path):
+        sql_path = os.path.join(BASE, "data_seed", "db-absensi-qr-v5-39-ok.sql")
+    if not os.path.exists(sql_path):
         return jsonify({"ok": False, "msg": f"file tidak ada: {sql_path}"}), 404
     with open(sql_path, encoding="utf-8") as f:
         sql = f.read()

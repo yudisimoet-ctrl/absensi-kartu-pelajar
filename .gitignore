@@ -5,3 +5,5 @@ __pycache__/
 data/
 drive_import/
 .DS_Store
+!data_seed/
+!data_seed/*.sql
