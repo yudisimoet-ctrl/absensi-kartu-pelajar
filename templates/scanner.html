@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scanner Absensi</title>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+<script src="/static/html5-qrcode.min.js"></script>
 <style>
   body{font-family:system-ui,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:16px}
   h2{margin:8px 0}
@@ -32,6 +32,7 @@
 
 <div class="ctrls">
   <select id="cam"><option value="">— pilih kamera —</option></select>
+  <button class="act" onclick="mintaIzin()">Izin Kamera</button>
   <button class="act" onclick="startCam()">Mulai Kamera</button>
   <button class="act" onclick="stopCam()">Stop</button>
 </div>
@@ -56,6 +57,32 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catc
 </script>
 
 <script>
+// Cek library & secure context dulu — kalau gagal, kasih pesan jelas
+const out=document.getElementById('hasil');
+const warn=document.getElementById('warn');
+const libOk = (typeof Html5Qrcode !== 'undefined');
+if(!libOk){
+  document.getElementById('hasil').innerHTML='<span class="err">Library scanner gagal load. Refresh halaman.</span>';
+}
+const secure = (location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1');
+if(!secure){
+  document.getElementById('warn').style.display='block';
+  document.getElementById('warn').innerHTML='⚠ Buka lewat https supaya kamera aktif.';
+}
+// Tombol minta izin kamera eksplisit (biar prompt pasti muncul)
+async function mintaIzin(){
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({video:true});
+    s.getTracks().forEach(t=>t.stop());
+    out.innerHTML='<span class="ok">Izin kamera OK. Pilih kamera lalu Mulai.</span>';
+    listCams();
+  }catch(e){
+    out.innerHTML='<span class="err">Izin kamera ditolak/batal: '+e.name+'. Cek ikon 🔒 di address bar → Kamera = Izinkan, lalu refresh. Atau pakai input manual.</span>';
+  }
+}
+</script>
+
+<script>
 let jenis="harian";
 document.querySelectorAll('.jenis button').forEach(b=>{
   b.onclick=()=>{
@@ -63,9 +90,8 @@ document.querySelectorAll('.jenis button').forEach(b=>{
     b.classList.add('aktif'); jenis=b.dataset.j;
   };
 });
-const out=document.getElementById('hasil');
-const warn=document.getElementById('warn');
-const scanner=new Html5Qrcode("reader");
+if(!libOk){ /* stop, jangan init scanner */ }
+else { var scanner=new Html5Qrcode("reader"); }
 let running=false;
 
 // Peringatan kalau bukan HTTPS (kamera di HP butuh secure context)
@@ -75,6 +101,7 @@ if(location.protocol!=='https:' && location.hostname!=='localhost' && location.h
 }
 
 async function listCams(){
+  if(!libOk){ return; }
   try{
     const cams=await Html5Qrcode.getCameras();
     const sel=document.getElementById('cam');
@@ -90,6 +117,7 @@ async function listCams(){
 listCams();
 
 async function startCam(){
+  if(!libOk){ out.innerHTML='<span class="err">Library scanner belum load. Refresh halaman.</span>'; return; }
   if(running) await stopCam();
   const camId=document.getElementById('cam').value;
   const config={fps:10,qrbox:260};
