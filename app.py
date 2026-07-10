@@ -310,7 +310,7 @@ def qr(siswa_id):
     s = db.execute("SELECT * FROM siswa WHERE id=?", (siswa_id,)).fetchone()
     if not s:
         abort(404)
-    payload = request.host_url.rstrip("/") + f"/kartu/{siswa_id}"
+    payload = s["kode"]   # encode kode langsung (ABS-xxx) → scanner resolve fleksibel
     img = qrcode.make(payload)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -338,6 +338,41 @@ def scanner():
     return render_template("scanner.html")
 
 
+def resolve_siswa(kode_raw):
+    """Terima berbagai format hasil scan & kembalikan row siswa.
+    Format: ABS-123, 123 (angka→ABS-123), atau URL kartu https://x/kartu/ID.
+    """
+    k = (kode_raw or "").strip()
+    db = get_db()
+    # 1) URL kartu → ambil id
+    m = re.search(r"/kartu/(\d+)", k)
+    if m:
+        row = db.execute("SELECT * FROM siswa WHERE id=?", (int(m.group(1)),)).fetchone()
+        return dict(row) if row else None
+    # 2) angka doang → ABS-xxx
+    if re.fullmatch(r"\d+", k):
+        k = "ABS-" + k
+    else:
+        k = k.upper()
+    # 3) kode langsung
+    row = db.execute("SELECT * FROM siswa WHERE kode=?", (k,)).fetchone()
+    return dict(row) if row else None
+
+
+def now_wib():
+    """Waktu lokal WIB (+7) tanpa dependensi tzdata."""
+    return (dt.datetime.utcnow() + dt.timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def sudah_absen_hari_ini(siswa_id, jenis, tanggal):
+    db = get_db()
+    c = db.execute(
+        "SELECT COUNT(*) AS n FROM absensi WHERE siswa_id=? AND jenis=? AND substr(waktu,1,10)=?",
+        (siswa_id, jenis, tanggal),
+    ).fetchone()
+    return c["n"] > 0
+
+
 @app.route("/api/log", methods=["POST"])
 def log_absen():
     d = request.get_json(force=True, silent=True) or {}
@@ -346,11 +381,19 @@ def log_absen():
     ket = (d.get("keterangan") or "").strip()
     if not kode or jenis not in JENIS_VALID:
         return jsonify({"ok": False, "msg": "kode & jenis tidak valid"}), 400
-    db = get_db()
-    s = db.execute("SELECT * FROM siswa WHERE kode=?", (kode,)).fetchone()
+    s = resolve_siswa(kode)
     if not s:
-        return jsonify({"ok": False, "msg": f"kode {kode} tidak terdaftar"}), 404
-    now = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return jsonify({"ok": False, "msg": f"kode '{kode}' tidak terdaftar"}), 404
+    if str(s.get("status") or "aktif").lower() != "aktif":
+        return jsonify({"ok": False, "msg": f"{s['nama']} status non-aktif, hubungi admin"}), 403
+    # Anti fraud: 1 siswa 1x per jenis per hari
+    now = now_wib()
+    tanggal = now[:10]
+    if sudah_absen_hari_ini(s["id"], jenis, tanggal):
+        return jsonify({"ok": False, "sudah": True,
+                        "msg": f"{s['nama']} sudah absen {jenis} hari ini",
+                        "nama": s["nama"], "kelas": s["kelas"], "jenis": jenis})
+    db = get_db()
     db.execute(
         "INSERT INTO absensi (siswa_id, jenis, waktu, keterangan) VALUES (?,?,?,?)",
         (s["id"], jenis, now, ket),
