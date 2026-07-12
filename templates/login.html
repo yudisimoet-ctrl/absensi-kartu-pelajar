@@ -4,30 +4,48 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box}
-  body{font-family:system-ui,-apple-system,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:32px;display:flex;justify-content:center;align-items:center;min-height:100vh}
-  .box{background:#1e293b;border-radius:16px;padding:28px;width:100%;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
-  h2{margin:0 0 20px;font-size:20px;text-align:center}
-  label{display:block;font-size:13px;color:#94a3b8;margin-bottom:4px}
-  input{width:100%;padding:12px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;font-size:15px;margin-bottom:14px}
-  input:focus{outline:none;border-color:#2563eb}
-  button{width:100%;padding:12px;border-radius:10px;border:0;background:#2563eb;color:#fff;font-size:16px;font-weight:600;cursor:pointer}
-  button:hover{background:#1d4ed8}
-  .err{background:#7f1d1d;color:#fca5a5;padding:10px;border-radius:10px;font-size:13px;text-align:center;margin-bottom:14px}
+  :root{--navy:#0f172a;--slate:#1e293b;--slate2:#334155;--muted:#94a3b8;--light:#e2e8f0;--white:#f8fafc;--accent:#059669;--accent-hover:#047857;--danger:#dc2626;--radius:12px;--shadow:0 4px 24px rgba(0,0,0,.25)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--navy);color:var(--light);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .login-card{background:var(--slate);border-radius:16px;padding:40px 32px;width:100%;max-width:400px;box-shadow:var(--shadow);border:1px solid var(--slate2)}
+  .login-header{text-align:center;margin-bottom:32px}
+  .login-icon{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#10b981);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px;box-shadow:0 4px 12px rgba(5,150,105,.3)}
+  h1{font-size:20px;font-weight:700;color:var(--white);margin-bottom:4px}
+  .subtitle{font-size:13px;color:var(--muted)}
+  .form-group{margin-bottom:16px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  input{width:100%;padding:12px 14px;border-radius:var(--radius);border:1px solid var(--slate2);background:var(--navy);color:var(--white);font-family:inherit;font-size:14px;transition:border-color .2s}
+  input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(5,150,105,.15)}
+  input::placeholder{color:var(--slate2)}
+  .btn{width:100%;padding:13px;border-radius:var(--radius);border:0;background:var(--accent);color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:8px}
+  .btn:hover{background:var(--accent-hover)}
+  .btn:active{transform:scale(.99)}
+  .error{background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.25);color:#fca5a5;padding:10px 14px;border-radius:var(--radius);font-size:13px;text-align:center;margin-bottom:16px}
+  .footer{text-align:center;margin-top:24px;font-size:12px;color:var(--slate2)}
 </style>
 </head>
 <body>
-<div class="box">
-  <h2>🔐 Admin Login</h2>
-  {% if error %}<div class="err">{{ error }}</div>{% endif %}
+<div class="login-card">
+  <div class="login-header">
+    <div class="login-icon">⚙️</div>
+    <h1>Admin Panel</h1>
+    <div class="subtitle">Kelola data siswa dan absensi</div>
+  </div>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
   <form method="POST">
-    <label>Username</label>
-    <input name="username" placeholder="Username" autofocus required>
-    <label>Password</label>
-    <input name="password" type="password" placeholder="Password" required>
-    <button type="submit">Masuk</button>
+    <div class="form-group">
+      <label>Username</label>
+      <input name="username" placeholder="Masukkan username" autofocus required>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input name="password" type="password" placeholder="Masukkan password" required>
+    </div>
+    <button class="btn" type="submit">Masuk</button>
   </form>
+  <div class="footer">Sistem Absensi Digital &copy; 2026</div>
 </div>
 </body>
 </html>

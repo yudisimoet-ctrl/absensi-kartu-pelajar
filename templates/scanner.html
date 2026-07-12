@@ -3,59 +3,97 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Scanner Absensi — Guru</title>
+<title>Scanner Absensi</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/static/html5-qrcode.min.js"></script>
 <style>
-  *{box-sizing:border-box}
-  body{font-family:system-ui,-apple-system,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:16px;max-width:480px;margin:0 auto}
-  h2{margin:4px 0 14px;font-size:20px;font-weight:700}
-  .card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
-  .label{font-size:12px;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+  :root{--navy:#0f172a;--slate:#1e293b;--slate2:#334155;--muted:#94a3b8;--light:#cbd5e1;--white:#f8fafc;--accent:#059669;--accent-hover:#047857;--accent-light:rgba(5,150,105,.12);--blue:#2563eb;--blue-hover:#1d4ed8;--orange:#d97706;--orange-light:rgba(217,119,6,.12);--danger:#dc2626;--danger-light:rgba(220,38,38,.12);--radius:14px;--shadow:0 2px 12px rgba(0,0,0,.2)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--navy);color:var(--light);min-height:100vh;min-height:100dvh}
+  .layout{max-width:480px;margin:0 auto;padding:16px 16px 32px}
+
+  /* Header */
+  .header{display:flex;align-items:center;justify-content:space-between;padding:12px 0 16px}
+  .header h1{font-size:18px;font-weight:700;color:var(--white);display:flex;align-items:center;gap:8px}
+  .guru-badge{font-size:12px;color:var(--light);background:var(--slate);padding:6px 12px;border-radius:20px;border:1px solid var(--slate2);display:flex;align-items:center;gap:6px}
+  .guru-badge .dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .btn-logout{font-size:11px;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px;border:1px solid var(--slate2);transition:all .2s}
+  .btn-logout:hover{color:var(--white);border-color:var(--muted)}
+
+  /* Cards */
+  .card{background:var(--slate);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.04)}
+  .card-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+
+  /* Jenis buttons */
   .jenis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .jenis button{padding:14px 0;border:0;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s;color:#fff;opacity:.55}
-  .jenis button[data-j="harian"]{background:#2563eb}
-  .jenis button[data-j="solat"]{background:#16a34a}
-  .jenis button[data-j="perpus"]{background:#d97706}
-  .jenis button.aktif{opacity:1;box-shadow:0 0 0 3px rgba(255,255,255,.9)}
-  .jenis button[data-j="harian"].aktif{box-shadow:0 0 0 3px #93c5fd}
-  .jenis button[data-j="solat"].aktif{box-shadow:0 0 0 3px #86efac}
-  .jenis button[data-j="perpus"].aktif{box-shadow:0 0 0 3px #fcd34d}
-  .ctrls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-  select,input[type=text]{flex:1;min-width:120px;padding:12px;border-radius:10px;border:0;background:#0f172a;color:#e2e8f0;font-size:15px}
-  button.act{padding:12px 14px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
-  button.act.alt{background:#0f172a;color:#94a3b8}
-  button.act.green{background:#16a34a}
-  input[type=file]{font-size:13px;color:#94a3b8;width:100%}
+  .jenis button{padding:14px 0;border:0;border-radius:12px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;color:#fff;opacity:.45;position:relative}
+  .jenis button[data-j="harian"]{background:var(--blue)}
+  .jenis button[data-j="solat"]{background:var(--accent)}
+  .jenis button[data-j="perpus"]{background:var(--orange)}
+  .jenis button.aktif{opacity:1;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+  .jenis button[data-j="harian"].aktif{box-shadow:0 0 0 2px rgba(96,165,250,.6),0 4px 12px rgba(37,99,235,.3)}
+  .jenis button[data-j="solat"].aktif{box-shadow:0 0 0 2px rgba(74,222,128,.6),0 4px 12px rgba(5,150,105,.3)}
+  .jenis button[data-j="perpus"].aktif{box-shadow:0 0 0 2px rgba(251,191,36,.6),0 4px 12px rgba(217,119,6,.3)}
 
-  /* Kamera + overlay hasil menimpa kamera */
-  .cam-wrap{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:280px}
+  /* Camera */
+  .cam-controls{display:flex;gap:6px;margin-bottom:10px}
+  .btn{padding:10px 14px;border:0;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;flex:1;text-align:center}
+  .btn:active{transform:scale(.97)}
+  .btn-green{background:var(--accent);color:#fff}.btn-green:hover{background:var(--accent-hover)}
+  .btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:var(--blue-hover)}
+  .btn-ghost{background:var(--navy);color:var(--muted);border:1px solid var(--slate2)}.btn-ghost:hover{color:var(--white)}
+
+  .cam-wrap{position:relative;width:100%;border-radius:14px;overflow:hidden;background:#000;min-height:280px}
   #reader{width:100%}
-  #reader video{width:100%!important;border-radius:12px}
-  #overlay{position:absolute;inset:0;display:none;flex-direction:column;justify-content:flex-end;
-    padding:14px;background:linear-gradient(to top,rgba(15,23,42,.92) 0%,rgba(15,23,42,.55) 45%,rgba(15,23,42,0) 100%)}
-  #overlay .row{display:flex;align-items:center;gap:12px}
-  #overlay .pic{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:0 0 auto;background:#334155}
-  #overlay .nm{font-size:19px;font-weight:700;line-height:1.2}
-  #overlay .sub{font-size:13px;color:#cbd5e1;margin-top:2px}
-  #overlay .tag{display:inline-block;margin-top:8px;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px}
-  #overlay.ok .tag{background:#16a34a;color:#fff}
-  #overlay.warn .tag{background:#d97706;color:#fff}
-  #overlay.err .tag{background:#dc2626;color:#fff}
-  #overlay .next{font-size:12px;color:#94a3b8;margin-top:6px}
+  #reader video{width:100%!important;border-radius:14px}
 
-  .status{font-size:15px;font-weight:600;padding:14px;border-radius:12px;background:#0f172a;min-height:22px;line-height:1.4;text-align:center}
-  .status.ok{color:#4ade80}.status.err{color:#f87171}.status.warn{color:#fbbf24}
-  .hint{font-size:13px;color:#94a3b8;line-height:1.5}
-  .divider{height:1px;background:#0f172a;margin:14px 0}
-  .badge{display:inline-block;font-size:12px;color:#94a3b8;background:#0f172a;padding:4px 10px;border-radius:8px}
+  /* Overlay */
+  #overlay{position:absolute;inset:0;display:none;flex-direction:column;justify-content:flex-end;padding:16px;border-radius:14px}
+  #overlay .row{display:flex;align-items:center;gap:14px}
+  #overlay .pic{width:56px;height:56px;border-radius:14px;object-fit:cover;flex-shrink:0;background:var(--slate2)}
+  #overlay .nm{font-size:17px;font-weight:700;color:var(--white);line-height:1.2}
+  #overlay .sub{font-size:12px;color:var(--light);margin-top:2px}
+  #overlay .tag{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px}
+  #overlay.ok{background:linear-gradient(to top,rgba(5,150,105,.9) 0%,rgba(5,150,105,.6) 40%,transparent 100%)}
+  #overlay.ok .tag{background:rgba(255,255,255,.2);color:#fff}
+  #overlay.warn{background:linear-gradient(to top,rgba(217,119,6,.9) 0%,rgba(217,119,6,.6) 40%,transparent 100%)}
+  #overlay.warn .tag{background:rgba(255,255,255,.2);color:#fff}
+  #overlay.err{background:linear-gradient(to top,rgba(220,38,38,.9) 0%,rgba(220,38,38,.6) 40%,transparent 100%)}
+  #overlay.err .tag{background:rgba(255,255,255,.2);color:#fff}
+  #overlay .next{font-size:11px;color:rgba(255,255,255,.6);margin-top:4px}
+
+  /* Status */
+  .status{font-size:13px;font-weight:500;padding:14px;border-radius:12px;background:var(--navy);min-height:20px;line-height:1.4;text-align:center;border:1px solid var(--slate2)}
+  .status.ok{color:#4ade80;border-color:rgba(5,150,105,.3)}.status.err{color:#f87171;border-color:rgba(220,38,38,.3)}.status.warn{color:#fbbf24;border-color:rgba(234,179,8,.3)}
+
+  /* Alternatif */
+  .alt-section{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .input-row{display:flex;gap:8px}
+  .input-row input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--slate2);background:var(--navy);color:var(--white);font-family:inherit;font-size:13px}
+  .input-row input:focus{outline:none;border-color:var(--accent)}
+
+  @media(max-width:360px){
+    .jenis button{font-size:12px;padding:12px 0}
+  }
 </style>
 </head>
 <body>
-<h2>📷 Scanner Absensi <a href="/scanner/logout" style="float:right;font-size:13px;color:#94a3b8;text-decoration:none">🚪 Logout</a></h2>
-<span class="badge">👤 {{ session.get('guru_nama', 'Guru') }}</span>
+<div class="layout">
 
+<!-- Header -->
+<div class="header">
+  <h1>📷 Scanner</h1>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="guru-badge"><span class="dot"></span> {{ session.get('guru_nama', 'Guru') }}</div>
+    <a href="/scanner/logout" class="btn-logout">Keluar</a>
+  </div>
+</div>
+
+<!-- Jenis Absen -->
 <div class="card">
-  <div class="label">1 · Pilih Jenis Absen</div>
+  <div class="card-label">① Pilih Jenis Absen</div>
   <div class="jenis">
     <button data-j="harian" class="aktif">Harian</button>
     <button data-j="solat">Solat</button>
@@ -63,12 +101,13 @@
   </div>
 </div>
 
+<!-- Kamera -->
 <div class="card">
-  <div class="label">2 · Kamera</div>
-  <div class="ctrls">
-    <button class="act green" onclick="mintaIzin()">Izin Kamera</button>
-    <button class="act" onclick="startCam()">▶ Mulai</button>
-    <button class="act alt" onclick="stopCam()">■ Stop</button>
+  <div class="card-label">② Scan Kartu</div>
+  <div class="cam-controls">
+    <button class="btn btn-green" onclick="mintaIzin()">Izin Kamera</button>
+    <button class="btn btn-blue" onclick="startCam()">▶ Mulai</button>
+    <button class="btn btn-ghost" onclick="stopCam()">■ Stop</button>
   </div>
   <div class="cam-wrap">
     <div id="reader"></div>
@@ -78,24 +117,27 @@
         <div class="nm" id="o-nm">—</div>
         <div class="sub" id="o-sub"></div>
         <span class="tag" id="o-tag"></span>
-        <div class="next">← arahkan ke kartu berikutnya</div>
+        <div class="next">← Arahkan ke kartu berikutnya</div>
       </div>
     </div></div>
   </div>
 </div>
 
-<div id="status" class="status">Pilih jenis, lalu tap <b>Izin Kamera</b> → <b>Mulai</b>.</div>
+<!-- Status -->
+<div id="status" class="status" style="margin-bottom:12px">Pilih jenis, lalu tap <b>Izin Kamera</b> → <b>Mulai</b></div>
 
+<!-- Alternatif -->
 <div class="card">
-  <div class="label">Alternatif (kamera mati)</div>
-  <div class="hint" style="margin-bottom:8px">• Upload foto kartu:</div>
-  <input type="file" id="upfile" accept="image/*" onchange="scanFile()">
-  <div class="divider"></div>
-  <div class="hint" style="margin-bottom:8px">• Atau ketik NISN / kode kartu:</div>
-  <div class="ctrls">
-    <input id="manual" type="text" placeholder="misal 9876543210" inputmode="numeric">
-    <button class="act" onclick="submitManual()">Catat</button>
+  <div class="card-label">Alternatif</div>
+  <div class="alt-section" style="margin-bottom:6px">Upload foto kartu:</div>
+  <input type="file" id="upfile" accept="image/*" onchange="scanFile()" style="margin-bottom:12px">
+  <div class="alt-section" style="margin-bottom:6px">Atau ketik NISN / kode kartu:</div>
+  <div class="input-row">
+    <input id="manual" placeholder="misal 9876543210" inputmode="numeric">
+    <button class="btn btn-blue" onclick="submitManual()">Catat</button>
   </div>
+</div>
+
 </div>
 
 <script>
@@ -110,9 +152,7 @@ const secure=(location.protocol==='https:'||location.hostname==='localhost'||loc
 if(!secure){ statusEl.innerHTML='<span class="warn">⚠ Buka lewat https supaya kamera aktif.</span>'; }
 
 function showOverlay(d,kind){
-  ov.className='';
-  ov.classList.add(kind);
-  ov.style.display='flex';
+  ov.className=''; ov.classList.add(kind); ov.style.display='flex';
   const pic=document.getElementById('o-pic');
   if(d.foto){ pic.src=d.foto; pic.style.display='block'; }
   else { pic.removeAttribute('src'); pic.style.display='none'; }
@@ -150,7 +190,7 @@ async function startCam(){
   if(!libOk){ statusEl.innerHTML='<span class="err">Library belum load. Refresh.</span>'; return; }
   if(running) await stopCam();
   const config={fps:10,qrbox:260};
-  const devId={facingMode:"environment"};   // langsung kamera belakang
+  const devId={facingMode:"environment"};
   statusEl.innerHTML='<span class="ok">Menyalakan kamera…</span>';
   try{ await scanner.start(devId,config,onScan,()=>{}); running=true; }
   catch(e){
@@ -177,7 +217,7 @@ function beep(){
 }
 async function onScan(decoded){
   const now=Date.now();
-  if(now-lastScan<1500) return;   // debounce 1.5dtk (anti double)
+  if(now-lastScan<1500) return;
   lastScan=now;
   statusEl.innerHTML='<span class="ok">Memproses…</span>';
   try{
@@ -187,7 +227,6 @@ async function onScan(decoded){
     else if(d.sudah){ showOverlay(d,'warn'); statusEl.innerHTML='<span class="warn">↺ Sudah absen.</span>'; }
     else { showOverlay(d,'err'); statusEl.innerHTML='<span class="err">✘ '+d.msg+'</span>'; }
   }catch(e){ statusEl.innerHTML='<span class="err">✘ '+e+'</span>'; }
-  // TIDAK pause → kamera tetap jalan, scan terus tanpa putus
 }
 
 async function scanFile(){
@@ -200,7 +239,7 @@ async function scanFile(){
 
 async function submitManual(){
   const v=document.getElementById('manual').value.trim();
-  if(!v){ alert('ketik NISN atau kode kartu'); return; }
+  if(!v){ alert('Ketik NISN atau kode kartu'); return; }
   let kode=v.toUpperCase();
   if(/^\d+$/.test(v)) kode='ABS-'+v;
   statusEl.innerHTML='<span class="ok">Memproses…</span>';

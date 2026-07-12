@@ -5,109 +5,184 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>Admin Absensi</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box}
-  body{font-family:system-ui,-apple-system,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:16px;max-width:720px;margin:0 auto}
-  h2{margin:6px 0 14px;font-size:20px}
-  .card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
-  .card h3{margin:0 0 10px;font-size:14px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
-  input,button,select{padding:10px;border-radius:8px;border:0;font-size:14px}
-  input,select{background:#0f172a;color:#fff;flex:1;min-width:110px}
-  button{background:#2563eb;color:#fff;cursor:pointer;font-weight:600}
-  button.alt{background:#0f172a;color:#94a3b8}
-  button.danger{background:#dc2626}
-  .form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-  .msg{font-size:13px;margin-top:8px;color:#4ade80;min-height:16px}
-  .msg.err{color:#f87171}
-  .tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-  .tabs button{background:#1e293b}
-  .tabs button.aktif{background:#2563eb;font-weight:700}
-  .tbl-wrap{max-height:300px;overflow:auto;border-radius:10px}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{padding:8px;border-bottom:1px solid #0f172a;text-align:left;vertical-align:middle}
-  th{color:#94a3b8;position:sticky;top:0;background:#1e293b}
-  .foto{width:34px;height:34px;border-radius:8px;object-fit:cover;vertical-align:middle}
-  a.link{color:#60a5fa;text-decoration:none}
-  .nav{display:flex;justify-content:center;gap:18px;margin-top:18px;font-size:14px}
-  .nav a{color:#60a5fa;text-decoration:none}
-  label.up{color:#60a5fa;cursor:pointer}
+  :root{--navy:#0f172a;--slate:#1e293b;--slate2:#334155;--muted:#94a3b8;--light:#cbd5e1;--white:#f8fafc;--accent:#059669;--accent-hover:#047857;--accent-light:rgba(5,150,105,.12);--blue:#2563eb;--blue-hover:#1d4ed8;--danger:#dc2626;--danger-light:rgba(220,38,38,.12);--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.2),0 4px 16px rgba(0,0,0,.15);--transition:all .2s ease}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--navy);color:var(--light);line-height:1.5}
+  .layout{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+
+  /* Header */
+  .header{display:flex;align-items:center;justify-content:space-between;padding:16px 0 24px;border-bottom:1px solid var(--slate2);margin-bottom:24px}
+  .header h1{font-size:20px;font-weight:700;color:var(--white);display:flex;align-items:center;gap:10px}
+  .header h1 span{font-size:24px}
+  .btn-logout{font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;padding:6px 12px;border-radius:8px;border:1px solid var(--slate2);transition:var(--transition)}
+  .btn-logout:hover{color:var(--white);border-color:var(--muted)}
+
+  /* Cards */
+  .card{background:var(--slate);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.04)}
+  .card-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .card-head .icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .card-head h2{font-size:14px;font-weight:600;color:var(--white);letter-spacing:.2px}
+  .card-head .badge{font-size:11px;color:var(--muted);background:var(--navy);padding:3px 8px;border-radius:6px;margin-left:auto}
+
+  /* Forms */
+  .form-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .form-row input,.form-row select{flex:1;min-width:100px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--slate2);background:var(--navy);color:var(--white);font-family:inherit;font-size:13px;transition:border-color .2s}
+  .form-row input:focus,.form-row select:focus{outline:none;border-color:var(--accent)}
+  .form-row input::placeholder{color:var(--slate2)}
+  input[type=file]{font-size:12px;color:var(--muted)}
+
+  /* Buttons */
+  .btn{padding:10px 18px;border-radius:var(--radius);border:0;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-hover)}
+  .btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:var(--blue-hover)}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--slate2)}.btn-ghost:hover{color:var(--white);border-color:var(--muted)}
+  .btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+  .btn:active{transform:scale(.97)}
+
+  /* Messages */
+  .msg{font-size:12px;margin-top:8px;min-height:16px;font-weight:500}.msg.ok{color:#4ade80}.msg.err{color:#f87171}
+
+  /* Tables */
+  .tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--slate2)}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;background:var(--navy);position:sticky;top:0;border-bottom:1px solid var(--slate2)}
+  td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .foto{width:32px;height:32px;border-radius:8px;object-fit:cover}
+  a.link{color:var(--blue);text-decoration:none;font-weight:500}a.link:hover{text-decoration:underline}
+  .link-danger{color:var(--danger);cursor:pointer;font-weight:500}.link-danger:hover{text-decoration:underline}
+  label.up{color:var(--blue);cursor:pointer;font-weight:500}
+
+  /* Tabs */
+  .tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;background:var(--navy);padding:4px;border-radius:10px}
+  .tabs button{padding:7px 14px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;transition:var(--transition)}
+  .tabs button.aktif{background:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(5,150,105,.25)}
+  .tabs a{color:var(--blue);text-decoration:none;font-size:12px;font-weight:500;align-self:center;margin-left:auto}
+
+  /* Nav footer */
+  .footer-nav{display:flex;justify-content:center;gap:20px;margin-top:24px;padding-top:20px;border-top:1px solid var(--slate2)}
+  .footer-nav a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s}.footer-nav a:hover{color:var(--white)}
+
+  /* Responsive */
+  @media(max-width:480px){
+    .form-row{flex-direction:column}
+    .form-row input{min-width:0}
+    th,td{padding:8px;font-size:11px}
+    .header h1{font-size:17px}
+  }
 </style>
 </head>
 <body>
-<h2>⚙ Admin — Data Siswa <a href="/admin/logout" style="float:right;font-size:13px;color:#94a3b8;text-decoration:none">🚪 Logout</a></h2>
+<div class="layout">
 
+<!-- Header -->
+<div class="header">
+  <h1><span>⚙</span> Admin Dashboard</h1>
+  <a href="/admin/logout" class="btn-logout">Logout →</a>
+</div>
+
+<!-- 1. Tambah Siswa -->
 <div class="card">
-  <h3>1 · Tambah Siswa</h3>
-  <div class="form">
+  <div class="card-head">
+    <div class="icon" style="background:var(--accent-light)">👤</div>
+    <h2>Tambah Siswa</h2>
+  </div>
+  <div class="form-row">
     <input id="nis" placeholder="NIS">
-    <input id="nisn" placeholder="NISN">
-    <input id="nama" placeholder="Nama">
+    <input id="nisn" placeholder="NISN *">
+    <input id="nama" placeholder="Nama Lengkap *">
+  </div>
+  <div class="form-row">
     <input id="kelas" placeholder="Kelas">
-    <input id="nowa" placeholder="No WA">
-    <button onclick="tambah()">+ Tambah</button>
+    <input id="nowa" placeholder="No. WhatsApp">
+    <button class="btn btn-primary" onclick="tambah()">+ Tambah</button>
   </div>
   <div id="m3" class="msg"></div>
 </div>
 
+<!-- 2. Import / Migrasi -->
 <div class="card">
-  <h3>2 · Import / Migrasi</h3>
-  <div class="form">
+  <div class="card-head">
+    <div class="icon" style="background:rgba(37,99,235,.12)">📂</div>
+    <h2>Import & Migrasi</h2>
+  </div>
+  <div class="form-row">
     <input type="file" id="csvfile" accept=".csv">
-    <button onclick="uploadCsv()">Upload CSV</button>
-    <button class="alt" onclick="migrate()">Migrasi SQL Drive</button>
-    <a class="link" href="/api/template.csv" style="align-self:center">template</a>
+    <button class="btn btn-blue" onclick="uploadCsv()">Upload CSV</button>
+    <button class="btn btn-ghost" onclick="migrate()">Migrasi SQL</button>
+    <a class="link" href="/api/template.csv" style="align-self:center;font-size:12px">↓ Template</a>
   </div>
   <div id="m1" class="msg"></div>
 </div>
 
+<!-- 3. Profil Sekolah -->
 <div class="card">
-  <h3>3 · Profil Sekolah</h3>
-  <div class="form">
+  <div class="card-head">
+    <div class="icon" style="background:rgba(234,179,8,.12)">🏫</div>
+    <h2>Profil Sekolah</h2>
+  </div>
+  <div class="form-row">
     <input id="p_nama" placeholder="Nama Sekolah">
-    <input id="p_alamat" placeholder="Alamamat">
+    <input id="p_alamat" placeholder="Alamat">
     <input id="p_kepsek" placeholder="Kepala Sekolah">
-    <button onclick="saveProfil()">Simpan</button>
+    <button class="btn btn-primary" onclick="saveProfil()">Simpan</button>
   </div>
   <div id="m2" class="msg"></div>
 </div>
 
+<!-- 4. Kelola Guru -->
 <div class="card">
-  <h3>4 · Kelola Guru</h3>
-  <div class="form">
+  <div class="card-head">
+    <div class="icon" style="background:rgba(37,99,235,.12)">👨‍🏫</div>
+    <h2>Kelola Guru</h2>
+    <span class="badge" id="guruCount">0 guru</span>
+  </div>
+  <div class="form-row">
     <input id="g_user" placeholder="Username">
     <input id="g_pass" type="password" placeholder="Password">
     <input id="g_nama" placeholder="Nama Guru">
-    <button onclick="tambahGuru()">+ Tambah Guru</button>
+    <button class="btn btn-primary" onclick="tambahGuru()">+ Tambah</button>
   </div>
   <div id="m4" class="msg"></div>
   <div class="tbl-wrap">
     <table id="guruTbl">
-      <thead><tr><th>ID</th><th>Username</th><th>Nama</th><th>Aksi</th></tr></thead>
+      <thead><tr><th>ID</th><th>Username</th><th>Nama</th><th style="text-align:right">Aksi</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
 </div>
 
+<!-- 5. Daftar Siswa -->
 <div class="card">
-  <h3>5 · Daftar Siswa</h3>
-  <div class="tbl-wrap">
+  <div class="card-head">
+    <div class="icon" style="background:var(--accent-light)">📋</div>
+    <h2>Daftar Siswa</h2>
+    <span class="badge" id="siswaCount">0 siswa</span>
+  </div>
+  <div class="tbl-wrap" style="max-height:360px;overflow-y:auto">
     <table id="tbl">
-      <thead><tr><th>Foto</th><th>ID</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Kode</th><th>Aksi</th></tr></thead>
+      <thead><tr><th>Foto</th><th>ID</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Kode</th><th style="text-align:right">Aksi</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
 </div>
 
+<!-- 6. Log Absensi -->
 <div class="card">
-  <h3>6 · Log Absensi (terbaru)</h3>
+  <div class="card-head">
+    <div class="icon" style="background:rgba(234,179,8,.12)">📊</div>
+    <h2>Log Absensi</h2>
+  </div>
   <div class="tabs">
     <button class="aktif" onclick="setJenis('all',this)">Semua</button>
     <button onclick="setJenis('harian',this)">Harian</button>
     <button onclick="setJenis('solat',this)">Solat</button>
     <button onclick="setJenis('perpus',this)">Perpus</button>
-    <a class="link" href="/api/export/csv" style="align-self:center">⬇ Export CSV</a>
+    <a href="/api/export/csv">↓ Export CSV</a>
   </div>
-  <div class="tbl-wrap">
+  <div class="tbl-wrap" style="max-height:360px;overflow-y:auto">
     <table id="logtbl">
       <thead><tr><th>Waktu</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Jenis</th><th>Guru</th><th>Ket</th></tr></thead>
       <tbody></tbody>
@@ -115,27 +190,38 @@
   </div>
 </div>
 
-<div class="nav"><a href="/">Home</a> · <a href="/scanner">Scanner</a> · <a href="#" onclick="installPWA()">Pasang App</a></div>
+<!-- Footer -->
+<div class="footer-nav">
+  <a href="/">Home</a>
+  <a href="/scanner">Scanner</a>
+  <a href="#" onclick="installPWA()">Pasang App</a>
+</div>
+
+</div>
 
 <script>
 let jenisLog='all';
-function setMsg(id,txt,err){const e=document.getElementById(id);e.textContent=txt;e.className='msg'+(err?' err':'');}
+function setMsg(id,txt,err){const e=document.getElementById(id);e.textContent=txt;e.className='msg'+(err?' err':' ok');}
 async function loadGuru(){
   try{
     const g=await(await fetch('/api/guru')).json();
+    document.getElementById('guruCount').textContent=g.length+' guru';
     document.querySelector('#guruTbl tbody').innerHTML=g.map(x=>
       `<tr><td>${x.id}</td><td>${x.username}</td><td>${x.nama}</td>
-       <td><a class="link" style="color:#f87171;cursor:pointer" onclick="hapusGuru(${x.id},'${x.nama.replace(/'/g,"")}')">hapus</a>
-       · <a class="link" style="cursor:pointer" onclick="resetPw(${x.id},'${x.nama.replace(/'/g,"")}')">reset pw</a></td></tr>`).join('');
+       <td style="text-align:right">
+         <span class="link-danger btn-sm" onclick="hapusGuru(${x.id},'${x.nama.replace(/'/g,"")}')">hapus</span>
+         &nbsp;·&nbsp;
+         <span class="link btn-sm" onclick="resetPw(${x.id},'${x.nama.replace(/'/g,"")}')">reset pw</span>
+       </td></tr>`).join('');
   }catch(e){}
 }
 async function tambahGuru(){
   const d={username:g_user.value.trim(),password:g_pass.value.trim(),nama:g_nama.value.trim()};
-  if(!d.username||!d.password||!d.nama){setMsg('m4','⚠ Semua field wajib diisi',true);return;}
+  if(!d.username||!d.password||!d.nama){setMsg('m4','Semua field wajib diisi',true);return;}
   const r=await fetch('/api/guru',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
   const j=await r.json();
-  if(j.ok){g_user.value=g_pass.value=g_nama.value='';setMsg('m4','✔ '+j.msg,false);loadGuru();}
-  else setMsg('m4','⚠ '+j.msg,true);
+  if(j.ok){g_user.value=g_pass.value=g_nama.value='';setMsg('m4',j.msg,false);loadGuru();}
+  else setMsg('m4',j.msg,true);
 }
 async function hapusGuru(id,nama){
   if(!confirm('Hapus guru "'+nama+'"?'))return;
@@ -149,7 +235,7 @@ async function resetPw(id,nama){
   if(!pw)return;
   const r=await fetch('/api/guru/'+id+'/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
   const j=await r.json();
-  setMsg('m4',j.ok?'✔ Password direset':'⚠ '+j.msg,!j.ok);
+  setMsg('m4',j.ok?'Password direset':j.msg,!j.ok);
 }
 async function loadProfil(){
   try{
@@ -165,29 +251,30 @@ async function saveProfil(){
 async function tampil(){
   try{
     const s=await(await fetch('/api/siswa')).json();
+    document.getElementById('siswaCount').textContent=s.length+' siswa';
     document.querySelector('#tbl tbody').innerHTML=s.map(x=>
       `<tr>
-        <td>${x.foto?`<img class="foto" src="${x.foto}">`:'👤'}</td>
-        <td>${x.id}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.kode}</td>
-        <td>
+        <td>${x.foto?`<img class="foto" src="${x.foto}">`:'<span style="opacity:.3">👤</span>'}</td>
+        <td>${x.id}</td><td>${x.nisn||'-'}</td><td style="font-weight:500;color:var(--white)">${x.nama}</td><td>${x.kelas||'-'}</td><td style="font-family:monospace;font-size:11px">${x.kode}</td>
+        <td style="text-align:right">
           <a class="link" href="/kartu/${x.id}" target="_blank">kartu</a> ·
           <label class="up">foto<input type="file" accept="image/*" style="display:none" onchange="upFoto(${x.id},this)"></label> ·
-          <a class="link" style="color:#f87171;cursor:pointer" onclick="hapus(${x.id},'${x.nama.replace(/'/g,"")}')">hapus</a>
+          <span class="link-danger" onclick="hapus(${x.id},'${x.nama.replace(/'/g,"")}')">hapus</span>
         </td>
       </tr>`).join('');
     const url='/api/logs'+(jenisLog!=='all'?('?jenis='+jenisLog):'');
     const l=await(await fetch(url)).json();
     document.querySelector('#logtbl tbody').innerHTML=l.map(x=>
-      `<tr><td>${x.waktu}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.jenis}</td><td>${x.guru_nama||'-'}</td><td>${x.keterangan||''}</td></tr>`).join('');
+      `<tr><td style="font-family:monospace;font-size:11px">${x.waktu}</td><td>${x.nisn||'-'}</td><td style="font-weight:500">${x.nama}</td><td>${x.kelas||'-'}</td><td><span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;${x.jenis==='harian'?'background:rgba(37,99,235,.15);color:#60a5fa':x.jenis==='solat'?'background:rgba(5,150,105,.15);color:#4ade80':'background:rgba(234,179,8,.15);color:#fbbf24'}">${x.jenis}</span></td><td>${x.guru_nama||'-'}</td><td style="font-size:11px;color:var(--muted)">${x.keterangan||''}</td></tr>`).join('');
   }catch(e){}
 }
 async function tambah(){
   const d={nis:nis.value.trim(),nisn:nisn.value.trim(),nama:nama.value.trim(),kelas:kelas.value.trim(),no_wa:nowa.value.trim()};
-  if(!d.nisn||!d.nama){setMsg('m3','⚠ NISN & Nama wajib diisi',true);return;}
+  if(!d.nisn||!d.nama){setMsg('m3','NISN & Nama wajib diisi',true);return;}
   const r=await fetch('/api/siswa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
   const j=await r.json();
-  if(j.ok){nis.value=nisn.value=nama.value=kelas.value=nowa.value='';setMsg('m3','✔ Ditambah: '+j.kode,false);tampil();}
-  else setMsg('m3','⚠ '+j.msg,true);
+  if(j.ok){nis.value=nisn.value=nama.value=kelas.value=nowa.value='';setMsg('m3','Ditambah: '+j.kode,false);tampil();}
+  else setMsg('m3',j.msg,true);
 }
 async function upFoto(id,input){
   const f=input.files[0]; if(!f)return;
@@ -204,7 +291,7 @@ async function hapus(id,nama){
   tampil();
 }
 async function uploadCsv(){
-  const f=csvfile.files[0]; if(!f){alert('pilih CSV');return;}
+  const f=csvfile.files[0]; if(!f){alert('Pilih CSV');return;}
   const fd=new FormData();fd.append('file',f);
   const r=await fetch('/api/siswa/bulk',{method:'POST',body:fd});
   const j=await r.json();
@@ -212,7 +299,7 @@ async function uploadCsv(){
   tampil();
 }
 async function migrate(){
-  if(!confirm('Migrasi siswa + profil dari db-absensi-qr-v5-39-ok.sql?'))return;
+  if(!confirm('Migrasi siswa + profil dari SQL?'))return;
   const r=await fetch('/api/migrate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
   const j=await r.json();
   setMsg('m1',`Migrasi: ${j.siswa} siswa, profil=${j.profil}`,false);
