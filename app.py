@@ -58,7 +58,7 @@ def admin_required(f):
 def guru_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if not session.get("guru_logged"):
+        if not session.get("guru_id"):
             if request.path.startswith("/api/"):
                 return jsonify({"ok": False, "msg": "unauthorized"}), 401
             return redirect(url_for("scanner_login"))
@@ -115,6 +115,13 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_absensi_siswa ON absensi(siswa_id);
         CREATE INDEX IF NOT EXISTS idx_absensi_waktu ON absensi(waktu);
+        CREATE TABLE IF NOT EXISTS guru (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            nama TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now','localtime'))
+        );
         """
     )
     # Migrasi: buang kolom jam_masuk/jam_pulang kalau masih ada (rollback schema lama)
@@ -130,6 +137,17 @@ def init_db():
     db.execute(
         "INSERT OR IGNORE INTO profil_sekolah (id) VALUES (1)"
     )
+    # Migrasi: tambah kolom guru_id di absensi kalau belum ada
+    abs_cols = [r[1] for r in db.execute("PRAGMA table_info(absensi)")]
+    if "guru_id" not in abs_cols:
+        db.execute("ALTER TABLE absensi ADD COLUMN guru_id INTEGER REFERENCES guru(id)")
+    # Seed default guru kalau tabel kosong
+    if db.execute("SELECT COUNT(*) AS n FROM guru").fetchone()[0] == 0:
+        import hashlib
+        default_pw = hashlib.sha256("guru123".encode()).hexdigest()
+        db.execute("INSERT INTO guru (username, password, nama) VALUES (?, ?, ?)",
+                    ("guru", default_pw, "Guru Default"))
+    db.commit()
     db.commit()
     db.close()
 
@@ -409,12 +427,20 @@ def scanner():
 
 @app.route("/scanner/login", methods=["GET", "POST"])
 def scanner_login():
+    import hashlib
     err = None
     if request.method == "POST":
-        u = request.form.get("username", "")
-        p = request.form.get("password", "")
-        if u == GURU_USER and p == GURU_PASS:
-            session["guru_logged"] = True
+        u = request.form.get("username", "").strip()
+        p = request.form.get("password", "").strip()
+        pw_hash = hashlib.sha256(p.encode()).hexdigest()
+        db = sqlite3.connect(DB)
+        db.row_factory = sqlite3.Row
+        row = db.execute("SELECT * FROM guru WHERE username=? AND password=?",
+                         (u, pw_hash)).fetchone()
+        db.close()
+        if row:
+            session["guru_id"] = row["id"]
+            session["guru_nama"] = row["nama"]
             return redirect(url_for("scanner"))
         err = "Username atau password salah"
     return render_template("login_guru.html", error=err)
@@ -422,8 +448,71 @@ def scanner_login():
 
 @app.route("/scanner/logout")
 def scanner_logout():
-    session.pop("guru_logged", None)
+    session.pop("guru_id", None)
+    session.pop("guru_nama", None)
     return redirect(url_for("scanner_login"))
+
+
+# ---------- Guru CRUD ----------
+@app.route("/api/guru", methods=["GET"])
+@admin_required
+def list_guru():
+    db = get_db()
+    rows = db.execute("SELECT id, username, nama, created_at FROM guru ORDER BY id").fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/guru", methods=["POST"])
+@admin_required
+def add_guru():
+    import hashlib
+    d = request.get_json(force=True, silent=True) or {}
+    username = (d.get("username") or "").strip()
+    password = (d.get("password") or "").strip()
+    nama = (d.get("nama") or "").strip()
+    if not username or not password or not nama:
+        return jsonify({"ok": False, "msg": "username, password, nama wajib diisi"}), 400
+    if len(password) < 4:
+        return jsonify({"ok": False, "msg": "password min 4 karakter"}), 400
+    pw_hash = hashlib.sha256(password.encode()).hexdigest()
+    db = get_db()
+    try:
+        db.execute("INSERT INTO guru (username, password, nama) VALUES (?,?,?)",
+                    (username, pw_hash, nama))
+        db.commit()
+    except Exception as e:
+        return jsonify({"ok": False, "msg": f"username sudah dipakai"}), 409
+    return jsonify({"ok": True, "msg": f"Guru '{nama}' ditambahkan"})
+
+
+@app.route("/api/guru/<int:guru_id>", methods=["DELETE"])
+@admin_required
+def del_guru(guru_id):
+    db = get_db()
+    g = db.execute("SELECT * FROM guru WHERE id=?", (guru_id,)).fetchone()
+    if not g:
+        return jsonify({"ok": False, "msg": "guru tidak ada"}), 404
+    db.execute("DELETE FROM guru WHERE id=?", (guru_id,))
+    db.commit()
+    return jsonify({"ok": True, "msg": f"Guru '{g['nama']}' dihapus"})
+
+
+@app.route("/api/guru/<int:guru_id>/reset", methods=["POST"])
+@admin_required
+def reset_pw_guru(guru_id):
+    import hashlib
+    d = request.get_json(force=True, silent=True) or {}
+    new_pw = (d.get("password") or "").strip()
+    if len(new_pw) < 4:
+        return jsonify({"ok": False, "msg": "password min 4 karakter"}), 400
+    db = get_db()
+    g = db.execute("SELECT * FROM guru WHERE id=?", (guru_id,)).fetchone()
+    if not g:
+        return jsonify({"ok": False, "msg": "guru tidak ada"}), 404
+    pw_hash = hashlib.sha256(new_pw.encode()).hexdigest()
+    db.execute("UPDATE guru SET password=? WHERE id=?", (pw_hash, guru_id))
+    db.commit()
+    return jsonify({"ok": True, "msg": f"Password guru '{g['nama']}' direset"})
 
 
 def resolve_siswa(kode_raw):
@@ -485,15 +574,17 @@ def log_absen():
                         "nisn": s.get("nisn") or "", "foto": s.get("foto") or "",
                         "jenis": jenis, "waktu": now})
     db = get_db()
+    guru_id = session.get("guru_id")
     db.execute(
-        "INSERT INTO absensi (siswa_id, jenis, waktu, keterangan) VALUES (?,?,?,?)",
-        (s["id"], jenis, now, ket),
+        "INSERT INTO absensi (siswa_id, jenis, waktu, keterangan, guru_id) VALUES (?,?,?,?,?)",
+        (s["id"], jenis, now, ket, guru_id),
     )
     db.commit()
     return jsonify({"ok": True, "nama": s["nama"], "kelas": s.get("kelas") or "",
                     "nisn": s.get("nisn") or "", "kode": s["kode"],
                     "foto": s.get("foto") or "",
-                    "jenis": jenis, "waktu": now})
+                    "jenis": jenis, "waktu": now,
+                    "guru": session.get("guru_nama", "")})
 
 
 @app.route("/api/logs")
@@ -502,7 +593,7 @@ def logs():
     db = get_db()
     jenis = request.args.get("jenis")
     limit = int(request.args.get("limit", 100))
-    q = "SELECT a.*, s.nama, s.kelas, s.nis, s.nisn FROM absensi a JOIN siswa s ON s.id=a.siswa_id"
+    q = "SELECT a.*, s.nama, s.kelas, s.nis, s.nisn, g.nama as guru_nama FROM absensi a JOIN siswa s ON s.id=a.siswa_id LEFT JOIN guru g ON g.id=a.guru_id"
     params = []
     if jenis in JENIS_VALID:
         q += " WHERE a.jenis=? "
@@ -516,7 +607,7 @@ def logs():
 # ---------- Export ----------
 def _rows_csv(jenis=None):
     db = get_db()
-    q = "SELECT a.waktu, s.nisn, s.nis, s.nama, s.kelas, a.jenis, a.keterangan FROM absensi a JOIN siswa s ON s.id=a.siswa_id"
+    q = "SELECT a.waktu, s.nisn, s.nis, s.nama, s.kelas, a.jenis, a.keterangan, g.nama as guru_nama FROM absensi a JOIN siswa s ON s.id=a.siswa_id LEFT JOIN guru g ON g.id=a.guru_id"
     params = []
     if jenis in JENIS_VALID:
         q += " WHERE a.jenis=? "
@@ -532,9 +623,9 @@ def export_csv():
     rows = _rows_csv(jenis)
     out = io.StringIO()
     w = csv.writer(out)
-    w.writerow(["waktu", "nisn", "nis", "nama", "kelas", "jenis", "keterangan"])
+    w.writerow(["waktu", "nisn", "nis", "nama", "kelas", "jenis", "keterangan", "guru"])
     for r in rows:
-        w.writerow([r["waktu"], r["nisn"], r["nis"], r["nama"], r["kelas"], r["jenis"], r["keterangan"]])
+        w.writerow([r["waktu"], r["nisn"], r["nis"], r["nama"], r["kelas"], r["jenis"], r["keterangan"], r.get("guru_nama") or ""])
     buf = io.BytesIO()
     buf.write(out.getvalue().encode("utf-8-sig"))
     buf.seek(0)

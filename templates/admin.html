@@ -72,7 +72,24 @@
 </div>
 
 <div class="card">
-  <h3>4 · Daftar Siswa</h3>
+  <h3>4 · Kelola Guru</h3>
+  <div class="form">
+    <input id="g_user" placeholder="Username">
+    <input id="g_pass" type="password" placeholder="Password">
+    <input id="g_nama" placeholder="Nama Guru">
+    <button onclick="tambahGuru()">+ Tambah Guru</button>
+  </div>
+  <div id="m4" class="msg"></div>
+  <div class="tbl-wrap">
+    <table id="guruTbl">
+      <thead><tr><th>ID</th><th>Username</th><th>Nama</th><th>Aksi</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3>5 · Daftar Siswa</h3>
   <div class="tbl-wrap">
     <table id="tbl">
       <thead><tr><th>Foto</th><th>ID</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Kode</th><th>Aksi</th></tr></thead>
@@ -82,7 +99,7 @@
 </div>
 
 <div class="card">
-  <h3>5 · Log Absensi (terbaru)</h3>
+  <h3>6 · Log Absensi (terbaru)</h3>
   <div class="tabs">
     <button class="aktif" onclick="setJenis('all',this)">Semua</button>
     <button onclick="setJenis('harian',this)">Harian</button>
@@ -92,7 +109,7 @@
   </div>
   <div class="tbl-wrap">
     <table id="logtbl">
-      <thead><tr><th>Waktu</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Jenis</th><th>Ket</th></tr></thead>
+      <thead><tr><th>Waktu</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Jenis</th><th>Guru</th><th>Ket</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -103,6 +120,37 @@
 <script>
 let jenisLog='all';
 function setMsg(id,txt,err){const e=document.getElementById(id);e.textContent=txt;e.className='msg'+(err?' err':'');}
+async function loadGuru(){
+  try{
+    const g=await(await fetch('/api/guru')).json();
+    document.querySelector('#guruTbl tbody').innerHTML=g.map(x=>
+      `<tr><td>${x.id}</td><td>${x.username}</td><td>${x.nama}</td>
+       <td><a class="link" style="color:#f87171;cursor:pointer" onclick="hapusGuru(${x.id},'${x.nama.replace(/'/g,"")}')">hapus</a>
+       · <a class="link" style="cursor:pointer" onclick="resetPw(${x.id},'${x.nama.replace(/'/g,"")}')">reset pw</a></td></tr>`).join('');
+  }catch(e){}
+}
+async function tambahGuru(){
+  const d={username:g_user.value.trim(),password:g_pass.value.trim(),nama:g_nama.value.trim()};
+  if(!d.username||!d.password||!d.nama){setMsg('m4','⚠ Semua field wajib diisi',true);return;}
+  const r=await fetch('/api/guru',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+  const j=await r.json();
+  if(j.ok){g_user.value=g_pass.value=g_nama.value='';setMsg('m4','✔ '+j.msg,false);loadGuru();}
+  else setMsg('m4','⚠ '+j.msg,true);
+}
+async function hapusGuru(id,nama){
+  if(!confirm('Hapus guru "'+nama+'"?'))return;
+  const r=await fetch('/api/guru/'+id,{method:'DELETE'});
+  const j=await r.json();
+  setMsg('m4',j.ok?('Dihapus: '+nama):(j.msg||'Gagal'),!j.ok);
+  loadGuru();
+}
+async function resetPw(id,nama){
+  const pw=prompt('Password baru untuk "'+nama+'":');
+  if(!pw)return;
+  const r=await fetch('/api/guru/'+id+'/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+  const j=await r.json();
+  setMsg('m4',j.ok?'✔ Password direset':'⚠ '+j.msg,!j.ok);
+}
 async function loadProfil(){
   try{
     const p=await(await fetch('/api/profil')).json();
@@ -130,7 +178,7 @@ async function tampil(){
     const url='/api/logs'+(jenisLog!=='all'?('?jenis='+jenisLog):'');
     const l=await(await fetch(url)).json();
     document.querySelector('#logtbl tbody').innerHTML=l.map(x=>
-      `<tr><td>${x.waktu}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.jenis}</td><td>${x.keterangan||''}</td></tr>`).join('');
+      `<tr><td>${x.waktu}</td><td>${x.nisn||'-'}</td><td>${x.nama}</td><td>${x.kelas||'-'}</td><td>${x.jenis}</td><td>${x.guru_nama||'-'}</td><td>${x.keterangan||''}</td></tr>`).join('');
   }catch(e){}
 }
 async function tambah(){
@@ -174,7 +222,7 @@ function setJenis(j,el){jenisLog=j;document.querySelectorAll('.tabs button').for
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
 function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>deferredPrompt=null);}}
-loadProfil();tampil();setInterval(tampil,5000);
+loadProfil();loadGuru();tampil();setInterval(tampil,5000);
 </script>
 </body>
 </html>

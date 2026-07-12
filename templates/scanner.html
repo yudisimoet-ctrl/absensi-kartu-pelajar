@@ -52,7 +52,7 @@
 </head>
 <body>
 <h2>📷 Scanner Absensi <a href="/scanner/logout" style="float:right;font-size:13px;color:#94a3b8;text-decoration:none">🚪 Logout</a></h2>
-<span class="badge">Untuk Guru</span>
+<span class="badge">👤 {{ session.get('guru_nama', 'Guru') }}</span>
 
 <div class="card">
   <div class="label">1 · Pilih Jenis Absen</div>
