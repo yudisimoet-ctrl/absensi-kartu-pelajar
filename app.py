@@ -16,8 +16,10 @@ import json
 import sqlite3
 import datetime as dt
 
+from functools import wraps
 from flask import (Flask, request, jsonify, render_template,
-                   send_file, send_from_directory, g, abort)
+                   send_file, send_from_directory, g, abort,
+                   session, redirect, url_for)
 import qrcode
 import barcode
 from barcode.writer import ImageWriter
@@ -33,6 +35,22 @@ DRIVE_WEBHOOK = os.environ.get("DRIVE_WEBHOOK", "")     # Apps Script upload CSV
 JENIS_VALID = ["harian", "solat", "perpus"]
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "absensi-secret-key-change-me")
+
+ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "admin123")
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("admin_logged"):
+            # API endpoints return 401, page routes redirect
+            if request.path.startswith("/api/"):
+                return jsonify({"ok": False, "msg": "unauthorized"}), 401
+            return redirect(url_for("admin_login"))
+        return f(*args, **kwargs)
+    return decorated
 
 
 def get_db():
@@ -115,6 +133,8 @@ def gen_kode(nisn):
 def profil():
     db = get_db()
     if request.method == "POST":
+        if not session.get("admin_logged"):
+            return jsonify({"ok": False, "msg": "unauthorized"}), 401
         d = request.get_json(force=True, silent=True) or {}
         cols = ["nama_sekolah", "alamat", "kepala_sekolah", "logo"]
         sets = {c: d.get(c) for c in cols}
@@ -136,6 +156,7 @@ def profil():
 
 # ---------- Siswa ----------
 @app.route("/api/siswa", methods=["POST"])
+@admin_required
 def add_siswa():
     d = request.get_json(force=True, silent=True) or {}
     nisn = (d.get("nisn") or d.get("nis") or "").strip()
@@ -166,6 +187,7 @@ def list_siswa():
 
 
 @app.route("/api/siswa/<int:siswa_id>", methods=["DELETE"])
+@admin_required
 def del_siswa(siswa_id):
     db = get_db()
     s = db.execute("SELECT * FROM siswa WHERE id=?", (siswa_id,)).fetchone()
@@ -186,6 +208,7 @@ def del_siswa(siswa_id):
 
 
 @app.route("/api/siswa/bulk", methods=["POST"])
+@admin_required
 def bulk_siswa():
     """Terima JSON array atau file CSV (multipart, field 'file')."""
     db = get_db()
@@ -247,6 +270,7 @@ def template_csv():
 
 # ---------- Migrasi dari SQL lama (phpMyAdmin dump) ----------
 @app.route("/api/migrate", methods=["POST"])
+@admin_required
 def migrate():
     path = request.get_json(force=True, silent=True) or {}
     sql_path = path.get("path") or os.path.join(BASE, "drive_import", "db-absensi-qr-v5-39-ok.sql")
@@ -439,6 +463,7 @@ def log_absen():
 
 
 @app.route("/api/logs")
+@admin_required
 def logs():
     db = get_db()
     jenis = request.args.get("jenis")
@@ -467,6 +492,7 @@ def _rows_csv(jenis=None):
 
 
 @app.route("/api/export/csv")
+@admin_required
 def export_csv():
     jenis = request.args.get("jenis")
     rows = _rows_csv(jenis)
@@ -507,8 +533,28 @@ def index():
 
 
 @app.route("/admin")
+@admin_required
 def admin():
     return render_template("admin.html")
+
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    err = None
+    if request.method == "POST":
+        u = request.form.get("username", "")
+        p = request.form.get("password", "")
+        if u == ADMIN_USER and p == ADMIN_PASS:
+            session["admin_logged"] = True
+            return redirect(url_for("admin"))
+        err = "Username atau password salah"
+    return render_template("login.html", error=err)
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("admin_logged", None)
+    return redirect(url_for("admin_login"))
 
 
 # ---------- Foto siswa ----------
@@ -517,6 +563,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 @app.route("/api/siswa/<int:siswa_id>/foto", methods=["POST"])
+@admin_required
 def upload_foto(siswa_id):
     db = get_db()
     s = db.execute("SELECT id FROM siswa WHERE id=?", (siswa_id,)).fetchone()
