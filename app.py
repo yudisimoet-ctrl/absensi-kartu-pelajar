@@ -39,6 +39,8 @@ app.secret_key = os.environ.get("SECRET_KEY", "absensi-secret-key-change-me")
 
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "admin123")
+GURU_USER = os.environ.get("GURU_USER", "guru")
+GURU_PASS = os.environ.get("GURU_PASS", "guru123")
 
 
 def admin_required(f):
@@ -49,6 +51,17 @@ def admin_required(f):
             if request.path.startswith("/api/"):
                 return jsonify({"ok": False, "msg": "unauthorized"}), 401
             return redirect(url_for("admin_login"))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def guru_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("guru_logged"):
+            if request.path.startswith("/api/"):
+                return jsonify({"ok": False, "msg": "unauthorized"}), 401
+            return redirect(url_for("scanner_login"))
         return f(*args, **kwargs)
     return decorated
 
@@ -389,8 +402,28 @@ def bar(siswa_id):
 
 # ---------- Scanner / log ----------
 @app.route("/scanner")
+@guru_required
 def scanner():
     return render_template("scanner.html")
+
+
+@app.route("/scanner/login", methods=["GET", "POST"])
+def scanner_login():
+    err = None
+    if request.method == "POST":
+        u = request.form.get("username", "")
+        p = request.form.get("password", "")
+        if u == GURU_USER and p == GURU_PASS:
+            session["guru_logged"] = True
+            return redirect(url_for("scanner"))
+        err = "Username atau password salah"
+    return render_template("login_guru.html", error=err)
+
+
+@app.route("/scanner/logout")
+def scanner_logout():
+    session.pop("guru_logged", None)
+    return redirect(url_for("scanner_login"))
 
 
 def resolve_siswa(kode_raw):
@@ -429,6 +462,7 @@ def sudah_absen_hari_ini(siswa_id, jenis, tanggal):
 
 
 @app.route("/api/log", methods=["POST"])
+@guru_required
 def log_absen():
     d = request.get_json(force=True, silent=True) or {}
     kode = (d.get("kode") or "").strip()

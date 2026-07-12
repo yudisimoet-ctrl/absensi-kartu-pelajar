@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login Guru</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:32px;display:flex;justify-content:center;align-items:center;min-height:100vh}
+  .box{background:#1e293b;border-radius:16px;padding:28px;width:100%;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+  h2{margin:0 0 20px;font-size:20px;text-align:center}
+  label{display:block;font-size:13px;color:#94a3b8;margin-bottom:4px}
+  input{width:100%;padding:12px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;font-size:15px;margin-bottom:14px}
+  input:focus{outline:none;border-color:#16a34a}
+  button{width:100%;padding:12px;border-radius:10px;border:0;background:#16a34a;color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+  button:hover{background:#15803d}
+  .err{background:#7f1d1d;color:#fca5a5;padding:10px;border-radius:10px;font-size:13px;text-align:center;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>📷 Login Guru — Scanner</h2>
+  {% if error %}<div class="err">{{ error }}</div>{% endif %}
+  <form method="POST">
+    <label>Username</label>
+    <input name="username" placeholder="Username" autofocus required>
+    <label>Password</label>
+    <input name="password" type="password" placeholder="Password" required>
+    <button type="submit">Masuk</button>
+  </form>
+</div>
+</body>
+</html>
