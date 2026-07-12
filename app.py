@@ -654,7 +654,7 @@ def export_sheets():
 # ---------- Pages ----------
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return redirect(url_for("scanner_login"))
 
 
 @app.route("/admin")
