@@ -54,6 +54,15 @@
   a.link{color:var(--blue);text-decoration:none;font-weight:500}a.link:hover{text-decoration:underline}
   .link-danger{color:var(--danger);cursor:pointer;font-weight:500}.link-danger:hover{text-decoration:underline}
   label.up{color:var(--blue);cursor:pointer;font-weight:500}
+  .link-edit{color:#fbbf24;cursor:pointer;font-weight:500}.link-edit:hover{text-decoration:underline}
+
+  /* Modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal-box{background:var(--slate);border-radius:16px;padding:24px;width:90%;max-width:440px;box-shadow:0 8px 32px rgba(0,0,0,.4);border:1px solid var(--slate2)}
+  .modal-box h3{font-size:16px;font-weight:700;color:var(--white);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .modal-box .form-row{margin-bottom:10px}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 
   /* Tabs */
   .tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;background:var(--navy);padding:4px;border-radius:10px}
@@ -190,6 +199,19 @@
   </div>
 </div>
 
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <h3><span id="modalIcon">✏️</span> <span id="modalTitle">Edit</span></h3>
+    <div id="modalFields"></div>
+    <div id="modalMsg" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" id="modalSave">Simpan</button>
+    </div>
+  </div>
+</div>
+
 <!-- Footer -->
 <div class="footer-nav">
   <a href="/">Home</a>
@@ -209,6 +231,8 @@ async function loadGuru(){
     document.querySelector('#guruTbl tbody').innerHTML=g.map(x=>
       `<tr><td>${x.id}</td><td>${x.username}</td><td>${x.nama}</td>
        <td style="text-align:right">
+         <span class="link-edit btn-sm" onclick="editGuru(${x.id},'${x.username}','${x.nama.replace(/'/g,"")}')">edit</span>
+         &nbsp;·&nbsp;
          <span class="link-danger btn-sm" onclick="hapusGuru(${x.id},'${x.nama.replace(/'/g,"")}')">hapus</span>
          &nbsp;·&nbsp;
          <span class="link btn-sm" onclick="resetPw(${x.id},'${x.nama.replace(/'/g,"")}')">reset pw</span>
@@ -258,6 +282,7 @@ async function tampil(){
         <td>${x.id}</td><td>${x.nisn||'-'}</td><td style="font-weight:500;color:var(--white)">${x.nama}</td><td>${x.kelas||'-'}</td><td style="font-family:monospace;font-size:11px">${x.kode}</td>
         <td style="text-align:right">
           <a class="link" href="/kartu/${x.id}" target="_blank">kartu</a> ·
+          <span class="link-edit" onclick="editSiswa(${x.id})">edit</span> ·
           <label class="up">foto<input type="file" accept="image/*" style="display:none" onchange="upFoto(${x.id},this)"></label> ·
           <span class="link-danger" onclick="hapus(${x.id},'${x.nama.replace(/'/g,"")}')">hapus</span>
         </td>
@@ -310,6 +335,58 @@ let deferredPrompt;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
 function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>deferredPrompt=null);}}
 loadProfil();loadGuru();tampil();setInterval(tampil,5000);
+
+/* ---- Edit Modal ---- */
+let modalType='';let modalId=0;
+function openModal(){document.getElementById('editModal').classList.add('show');document.getElementById('modalMsg').textContent='';}
+function closeModal(){document.getElementById('editModal').classList.remove('show');}
+
+async function editSiswa(id){
+  const r=await fetch('/api/siswa/'+id);const s=await r.json();
+  if(!s.id){alert('Siswa tidak ditemukan');return;}
+  modalType='siswa';modalId=s.id;
+  document.getElementById('modalIcon').textContent='👤';
+  document.getElementById('modalTitle').textContent='Edit Siswa: '+s.nama;
+  document.getElementById('modalFields').innerHTML=`
+    <div class="form-row"><input id="e_nis" placeholder="NIS" value="${s.nis||''}"></div>
+    <div class="form-row"><input id="e_nisn" placeholder="NISN *" value="${s.nisn||''}"></div>
+    <div class="form-row"><input id="e_nama" placeholder="Nama *" value="${s.nama||''}"></div>
+    <div class="form-row"><input id="e_kelas" placeholder="Kelas" value="${s.kelas||''}"></div>
+    <div class="form-row"><input id="e_nowa" placeholder="No. WhatsApp" value="${s.no_wa||''}"></div>
+    <div class="form-row"><select id="e_status"><option value="aktif" ${s.status==='aktif'?'selected':''}>Aktif</option><option value="non-aktif" ${s.status==='non-aktif'?'selected':''}>Non-Aktif</option></select></div>`;
+  document.getElementById('modalSave').onclick=saveSiswa;
+  openModal();
+}
+async function saveSiswa(){
+  const d={nis:document.getElementById('e_nis').value.trim(),nisn:document.getElementById('e_nisn').value.trim(),nama:document.getElementById('e_nama').value.trim(),kelas:document.getElementById('e_kelas').value.trim(),no_wa:document.getElementById('e_nowa').value.trim(),status:document.getElementById('e_status').value};
+  if(!d.nisn||!d.nama){document.getElementById('modalMsg').textContent='NISN & Nama wajib';document.getElementById('modalMsg').className='msg err';return;}
+  const r=await fetch('/api/siswa/'+modalId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+  const j=await r.json();
+  if(j.ok){closeModal();tampil();setMsg('m3',j.msg,false);}
+  else{document.getElementById('modalMsg').textContent=j.msg;document.getElementById('modalMsg').className='msg err';}
+}
+
+function editGuru(id,username,nama){
+  modalType='guru';modalId=id;
+  document.getElementById('modalIcon').textContent='👨‍🏫';
+  document.getElementById('modalTitle').textContent='Edit Guru: '+nama;
+  document.getElementById('modalFields').innerHTML=`
+    <div class="form-row"><input id="e_guser" placeholder="Username" value="${username}"></div>
+    <div class="form-row"><input id="e_gnama" placeholder="Nama Guru" value="${nama}"></div>`;
+  document.getElementById('modalSave').onclick=saveGuru;
+  openModal();
+}
+async function saveGuru(){
+  const d={username:document.getElementById('e_guser').value.trim(),nama:document.getElementById('e_gnama').value.trim()};
+  if(!d.username||!d.nama){document.getElementById('modalMsg').textContent='Username & Nama wajib';document.getElementById('modalMsg').className='msg err';return;}
+  const r=await fetch('/api/guru/'+modalId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+  const j=await r.json();
+  if(j.ok){closeModal();loadGuru();setMsg('m4',j.msg,false);}
+  else{document.getElementById('modalMsg').textContent=j.msg;document.getElementById('modalMsg').className='msg err';}
+}
+
+// Close modal on overlay click
+document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 </script>
 </body>
 </html>

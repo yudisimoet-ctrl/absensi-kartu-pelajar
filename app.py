@@ -217,6 +217,45 @@ def list_siswa():
     return jsonify([dict(r) for r in rows])
 
 
+@app.route("/api/siswa/<int:siswa_id>", methods=["GET"])
+def get_siswa(siswa_id):
+    db = get_db()
+    s = db.execute("SELECT * FROM siswa WHERE id=?", (siswa_id,)).fetchone()
+    if not s:
+        return jsonify({"ok": False, "msg": "siswa tidak ada"}), 404
+    return jsonify(dict(s))
+
+
+@app.route("/api/siswa/<int:siswa_id>", methods=["PUT"])
+@admin_required
+def edit_siswa(siswa_id):
+    db = get_db()
+    s = db.execute("SELECT * FROM siswa WHERE id=?", (siswa_id,)).fetchone()
+    if not s:
+        return jsonify({"ok": False, "msg": "siswa tidak ada"}), 404
+    d = request.get_json(force=True, silent=True) or {}
+    nis = (d.get("nis") or "").strip()
+    nisn = (d.get("nisn") or "").strip()
+    nama = (d.get("nama") or "").strip()
+    kelas = (d.get("kelas") or "").strip()
+    no_wa = (d.get("no_wa") or "").strip()
+    status = (d.get("status") or "aktif").strip()
+    if not nisn or not nama:
+        return jsonify({"ok": False, "msg": "nisn & nama wajib"}), 400
+    # Update kode jika nisn berubah
+    kode = gen_kode(nisn)
+    try:
+        db.execute(
+            """UPDATE siswa SET nis=?, nisn=?, nama=?, kelas=?, no_wa=?, status=?, kode=?
+               WHERE id=?""",
+            (nis, nisn, nama, kelas, no_wa, status, kode, siswa_id),
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        return jsonify({"ok": False, "msg": "NISN sudah dipakai siswa lain"}), 409
+    return jsonify({"ok": True, "msg": f"Data {nama} diupdate"})
+
+
 @app.route("/api/siswa/<int:siswa_id>", methods=["DELETE"])
 @admin_required
 def del_siswa(siswa_id):
@@ -483,6 +522,27 @@ def add_guru():
     except Exception as e:
         return jsonify({"ok": False, "msg": f"username sudah dipakai"}), 409
     return jsonify({"ok": True, "msg": f"Guru '{nama}' ditambahkan"})
+
+
+@app.route("/api/guru/<int:guru_id>", methods=["PUT"])
+@admin_required
+def edit_guru(guru_id):
+    db = get_db()
+    g = db.execute("SELECT * FROM guru WHERE id=?", (guru_id,)).fetchone()
+    if not g:
+        return jsonify({"ok": False, "msg": "guru tidak ada"}), 404
+    d = request.get_json(force=True, silent=True) or {}
+    username = (d.get("username") or "").strip()
+    nama = (d.get("nama") or "").strip()
+    if not username or not nama:
+        return jsonify({"ok": False, "msg": "username & nama wajib"}), 400
+    try:
+        db.execute("UPDATE guru SET username=?, nama=? WHERE id=?",
+                   (username, nama, guru_id))
+        db.commit()
+    except sqlite3.IntegrityError:
+        return jsonify({"ok": False, "msg": "username sudah dipakai"}), 409
+    return jsonify({"ok": True, "msg": f"Guru '{nama}' diupdate"})
 
 
 @app.route("/api/guru/<int:guru_id>", methods=["DELETE"])
