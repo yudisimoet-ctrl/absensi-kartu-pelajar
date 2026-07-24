@@ -3,22 +3,53 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#064e3b">
+<link rel="manifest" href="/manifest.webmanifest">
 <title>Absensi Digital — Guru</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  body{font-family:system-ui,Arial;background:#0f172a;color:#e2e8f0;margin:0;padding:32px;text-align:center}
-  h1{font-size:24px;margin-bottom:6px}
-  p{opacity:.8;margin-bottom:24px}
-  .menu{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-  a.btn{padding:16px 28px;background:#2563eb;color:#fff;border-radius:12px;text-decoration:none;font-size:17px;font-weight:600}
-  .badge{display:inline-block;font-size:12px;color:#94a3b8;background:#1e293b;padding:4px 10px;border-radius:8px;margin-bottom:16px}
+  :root{--ink:#10231d;--muted:#61736c;--green:#059669;--green2:#047857;--line:#dce8e3;--paper:#fff;--soft:#f2f8f5}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:
+    radial-gradient(circle at 12% 10%,rgba(16,185,129,.16),transparent 28%),
+    radial-gradient(circle at 92% 88%,rgba(37,99,235,.12),transparent 30%),#eef6f2;padding:20px}
+  .shell{width:min(1060px,100%);min-height:calc(100vh - 40px);margin:auto;background:rgba(255,255,255,.84);border:1px solid rgba(255,255,255,.9);border-radius:30px;box-shadow:0 28px 80px rgba(15,70,52,.14);overflow:hidden;backdrop-filter:blur(16px)}
+  header{display:flex;justify-content:space-between;align-items:center;padding:22px 28px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:800}.brand-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#059669,#34d399);display:grid;place-items:center;color:#fff;box-shadow:0 8px 22px rgba(5,150,105,.25)}
+  .role{font-size:12px;font-weight:700;color:#047857;background:#dcfce7;padding:8px 12px;border-radius:999px}
+  main{display:grid;grid-template-columns:1.15fr .85fr;align-items:center;gap:52px;padding:64px 7% 74px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;color:#047857;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 0 5px rgba(16,185,129,.12)}
+  h1{font-size:clamp(38px,6vw,68px);letter-spacing:-.055em;line-height:.98;margin:18px 0 20px;max-width:680px}h1 span{color:var(--green)}
+  .lead{font-size:17px;line-height:1.7;color:var(--muted);max-width:600px;margin:0 0 28px}
+  .cta{display:inline-flex;align-items:center;justify-content:center;gap:11px;padding:15px 22px;border-radius:14px;color:#fff;background:linear-gradient(135deg,var(--green),var(--green2));text-decoration:none;font-weight:800;box-shadow:0 12px 28px rgba(5,150,105,.25);transition:.2s}.cta:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(5,150,105,.3)}
+  .notes{display:flex;gap:20px;flex-wrap:wrap;margin-top:24px;color:var(--muted);font-size:12px;font-weight:600}.notes span{display:flex;align-items:center;gap:6px}
+  .visual{position:relative;min-height:400px;display:grid;place-items:center}.phone{width:260px;background:#0b1f18;border-radius:34px;padding:10px;box-shadow:0 32px 60px rgba(15,35,29,.28);transform:rotate(3deg)}
+  .screen{min-height:450px;border-radius:26px;background:#142c23;padding:18px;color:#fff;overflow:hidden}.scan-head{display:flex;justify-content:space-between;font-size:11px;color:#a7c9bc}.scan-title{font-size:21px;font-weight:800;margin:26px 0 14px}.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.mode{padding:9px 3px;text-align:center;border-radius:9px;font-size:9px;font-weight:800}.blue{background:#2563eb}.green{background:#059669}.orange{background:#d97706}
+  .camera{height:220px;border-radius:18px;margin-top:14px;background:linear-gradient(145deg,#244438,#10231d);position:relative;display:grid;place-items:center}.corners{width:125px;height:125px;border:2px solid #6ee7b7;border-radius:16px;box-shadow:0 0 30px rgba(110,231,183,.18)}.line{position:absolute;width:118px;height:2px;background:#6ee7b7;box-shadow:0 0 12px #6ee7b7;animation:scan 2.4s infinite}@keyframes scan{0%,100%{transform:translateY(-50px)}50%{transform:translateY(50px)}}
+  .success{margin-top:12px;background:#e7fff5;color:#065f46;border-radius:14px;padding:13px;display:flex;gap:10px;align-items:center;font-size:10px}.avatar{width:32px;height:32px;background:#a7f3d0;border-radius:10px;display:grid;place-items:center;font-size:15px}.success b{display:block;font-size:11px}
+  .float{position:absolute;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 15px;box-shadow:0 14px 35px rgba(16,35,29,.12);font-size:11px;font-weight:700}.f1{top:38px;right:-8px}.f2{bottom:43px;left:-12px}.float small{display:block;color:var(--muted);font-weight:500;margin-top:3px}
+  footer{padding:16px 28px;color:#789088;font-size:11px;border-top:1px solid var(--line);display:flex;justify-content:space-between}
+  @media(max-width:760px){body{padding:0}.shell{border-radius:0;min-height:100vh}.visual{display:none}main{display:block;padding:52px 24px 68px}header{padding:18px 20px}h1{font-size:45px}.lead{font-size:15px}.cta{width:100%}footer{padding:16px 20px}.notes{gap:12px}}
 </style>
 </head>
 <body>
-<span class="badge">Untuk Guru</span>
-<h1>Sistem Absensi Digital</h1>
-<p>Kartu pelajar dengan barcode · absensi harian, solat, perpustakaan</p>
-<div class="menu">
-  <a class="btn" href="/scanner">📷 Buka Scanner Absen</a>
+<div class="shell">
+  <header><div class="brand"><div class="brand-mark">✓</div><span>ABSENSI DIGITAL</span></div><div class="role">Portal Guru</div></header>
+  <main>
+    <section>
+      <div class="eyebrow"><span class="dot"></span> Cepat · Akurat · Terpantau</div>
+      <h1>Catat kehadiran dalam <span>satu scan.</span></h1>
+      <p class="lead">Pindai QR kartu pelajar untuk absensi harian, salat, dan perpustakaan. Data siswa langsung tampil dan tersimpan otomatis.</p>
+      <a class="cta" href="/scanner"><span>▣</span> Buka Scanner Absensi <span>→</span></a>
+      <div class="notes"><span>✓ Kamera belakang otomatis</span><span>✓ Anti absen ganda</span><span>✓ Bisa dipasang sebagai aplikasi</span></div>
+    </section>
+    <section class="visual" aria-hidden="true">
+      <div class="phone"><div class="screen"><div class="scan-head"><span>Scanner Guru</span><span>● Online</span></div><div class="scan-title">Pilih jenis absen</div><div class="modes"><div class="mode blue">HARIAN</div><div class="mode green">SALAT</div><div class="mode orange">PERPUS</div></div><div class="camera"><div class="corners"></div><div class="line"></div></div><div class="success"><div class="avatar">👤</div><div><b>Ahmad Fadhil</b>✓ Kehadiran tercatat · 07:02</div></div></div></div>
+      <div class="float f1">⚡ Scan instan<small>Kurang dari 2 detik</small></div><div class="float f2">🛡 Anti duplikat<small>1× per jenis / hari</small></div>
+    </section>
+  </main>
+  <footer><span>Sistem Absensi Sekolah</span><span>Siap digunakan di HP & komputer</span></footer>
 </div>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}</script>
 </body>
 </html>

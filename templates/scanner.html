@@ -8,14 +8,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/static/html5-qrcode.min.js"></script>
 <style>
-  :root{--navy:#0f172a;--slate:#1e293b;--slate2:#334155;--muted:#94a3b8;--light:#cbd5e1;--white:#f8fafc;--accent:#059669;--accent-hover:#047857;--accent-light:rgba(5,150,105,.12);--blue:#2563eb;--blue-hover:#1d4ed8;--orange:#d97706;--orange-light:rgba(217,119,6,.12);--danger:#dc2626;--danger-light:rgba(220,38,38,.12);--radius:14px;--shadow:0 2px 12px rgba(0,0,0,.2)}
+  :root{--navy:#071b14;--slate:#102a20;--slate2:#234337;--muted:#91aea2;--light:#d5e7df;--white:#f8fffc;--accent:#10b981;--accent-hover:#059669;--accent-light:rgba(16,185,129,.12);--blue:#2563eb;--blue-hover:#1d4ed8;--orange:#d97706;--orange-light:rgba(217,119,6,.12);--danger:#dc2626;--danger-light:rgba(220,38,38,.12);--radius:18px;--shadow:0 14px 40px rgba(0,0,0,.22)}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--navy);color:var(--light);min-height:100vh;min-height:100dvh}
-  .layout{max-width:480px;margin:0 auto;padding:16px 16px 32px}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:radial-gradient(circle at 50% -20%,#176b4d 0%,var(--navy) 38%);color:var(--light);min-height:100vh;min-height:100dvh}
+  .layout{max-width:520px;margin:0 auto;padding:18px 16px 40px}
 
   /* Header */
-  .header{display:flex;align-items:center;justify-content:space-between;padding:12px 0 16px}
-  .header h1{font-size:18px;font-weight:700;color:var(--white);display:flex;align-items:center;gap:8px}
+  .header{display:flex;align-items:center;justify-content:space-between;padding:10px 2px 20px}
+  .header h1{font-size:20px;font-weight:800;color:var(--white);display:flex;align-items:center;gap:9px;letter-spacing:-.03em}
   .guru-badge{font-size:12px;color:var(--light);background:var(--slate);padding:6px 12px;border-radius:20px;border:1px solid var(--slate2);display:flex;align-items:center;gap:6px}
   .guru-badge .dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
@@ -23,7 +23,7 @@
   .btn-logout:hover{color:var(--white);border-color:var(--muted)}
 
   /* Cards */
-  .card{background:var(--slate);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.04)}
+  .card{background:linear-gradient(145deg,rgba(16,42,32,.96),rgba(10,32,24,.96));border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid rgba(167,243,208,.09)}
   .card-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 
   /* Jenis buttons */
@@ -45,8 +45,9 @@
   .btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:var(--blue-hover)}
   .btn-ghost{background:var(--navy);color:var(--muted);border:1px solid var(--slate2)}.btn-ghost:hover{color:var(--white)}
 
-  .cam-wrap{position:relative;width:100%;border-radius:14px;overflow:hidden;background:#000;min-height:280px}
-  #reader{width:100%}
+  .cam-wrap{position:relative;width:100%;border-radius:18px;overflow:hidden;background:linear-gradient(145deg,#0b1511,#000);min-height:300px;border:1px solid rgba(167,243,208,.12)}
+  #reader{width:100%;min-height:300px;display:grid;place-items:center}
+  #reader:empty:before{content:'Arahkan kamera ke QR kartu pelajar';color:#668077;font-size:12px}
   #reader video{width:100%!important;border-radius:14px}
 
   /* Overlay */
